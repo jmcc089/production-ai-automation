@@ -1,0 +1,1470 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Cedar Healthcare — Wellness Clinic in Austin, TX</title>
+        <meta
+            name="description"
+            content="Cedar Healthcare is a small wellness clinic in Austin, Texas offering physiotherapy, sports massage, and clinical nutrition."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            :root {
+                --blue: #1d40ae;
+                --blue-dark: #162e82;
+                --blue-light: #eef2ff;
+                --cyan: #06b6d4;
+                --cyan-light: #ecfeff;
+                --slate: #1e293b;
+                --slate-mid: #475569;
+                --slate-light: #94a3b8;
+                --border: #e2e8f0;
+                --bg: #ffffff;
+                --bg-alt: #f8fafc;
+                --serif: "DM Serif Display", Georgia, serif;
+                --sans: "DM Sans", system-ui, sans-serif;
+                --nav-h: 68px;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                font-family: var(--sans);
+                color: var(--slate);
+                background: var(--bg);
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            /* ── NAVIGATION ── */
+            nav {
+                position: sticky;
+                top: 0;
+                z-index: 100;
+                height: var(--nav-h);
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+            }
+            .nav-inner {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 0 32px;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-logo {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                text-decoration: none;
+            }
+            .nav-logo img {
+                height: 32px;
+                width: auto;
+            }
+            .nav-logo-text {
+                font-family: var(--serif);
+                font-size: 20px;
+                color: var(--blue);
+                letter-spacing: -0.3px;
+            }
+            .nav-links {
+                display: flex;
+                align-items: center;
+                gap: 32px;
+                list-style: none;
+            }
+            .nav-links a {
+                font-size: 14px;
+                font-weight: 400;
+                color: var(--slate-mid);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            .nav-links a:hover {
+                color: var(--blue);
+            }
+            .nav-cta {
+                background: var(--blue);
+                color: #fff !important;
+                padding: 9px 20px;
+                border-radius: 8px;
+                font-weight: 500 !important;
+                transition: background 0.2s !important;
+            }
+            .nav-cta:hover {
+                background: var(--blue-dark) !important;
+                color: #fff !important;
+            }
+            .hamburger {
+                display: none;
+                flex-direction: column;
+                gap: 5px;
+                cursor: pointer;
+                background: none;
+                border: none;
+                padding: 4px;
+            }
+            .hamburger span {
+                display: block;
+                width: 22px;
+                height: 2px;
+                background: var(--slate);
+                border-radius: 2px;
+                transition: all 0.3s;
+            }
+
+            /* ── PAGE SECTIONS ── */
+            .page-section {
+                display: none;
+            }
+            .page-section.active {
+                display: block;
+            }
+
+            /* ── HERO LAYOUT ── */
+            .hero {
+                min-height: calc(100vh - var(--nav-h));
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 80px 32px;
+                display: flex;
+                flex-direction: column;
+                /* This line centers the content vertically */
+                justify-content: center;
+                gap: 64px;
+            }
+            .hero-main-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+                gap: 64px;
+                width: 100%;
+            }
+            .hero-eyebrow {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 12px;
+                font-weight: 500;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 20px;
+            }
+            .hero-eyebrow::before {
+                content: "";
+                display: block;
+                width: 24px;
+                height: 1.5px;
+                background: var(--cyan);
+            }
+            .hero h1 {
+                font-family: var(--serif);
+                font-size: clamp(40px, 5vw, 60px);
+                line-height: 1.1;
+                color: var(--slate);
+                letter-spacing: -1px;
+                margin-bottom: 24px;
+            }
+            .hero h1 em {
+                font-style: italic;
+                color: var(--blue);
+            }
+            .hero-desc {
+                font-size: 17px;
+                color: var(--slate-mid);
+                line-height: 1.7;
+                max-width: 480px;
+            }
+
+            /* Center Button Container spanning the full width below the grid */
+            .hero-actions-centered {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                margin-top: 16px;
+            }
+
+            /* Large, highly prominent CTA button matching your second design */
+            .btn-primary-large {
+                background: transparent;
+                color: var(--blue);
+                border: 2px solid var(--blue);
+                padding: 20px 60px;
+                border-radius: 50px; /* Fully rounded "pill" shape */
+                font-size: 22px;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.3s ease;
+            }
+
+            .btn-primary-large:hover {
+                background: var(--blue);
+                color: #fff;
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(29, 64, 174, 0.15);
+            }
+
+            .hero-visual {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+            .hero-card {
+                background: var(--bg-alt);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 24px;
+            }
+            .hero-card:first-child {
+                grid-column: span 2;
+                background: var(--blue);
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            .hero-card-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .hero-card:first-child .hero-card-icon svg {
+                color: #fff;
+            }
+            .hero-card-title {
+                font-size: 14px;
+                font-weight: 500;
+                margin-bottom: 2px;
+            }
+            .hero-card-sub {
+                font-size: 12px;
+                opacity: 0.7;
+            }
+            .hero-stat {
+                text-align: center;
+                padding: 20px 16px;
+            }
+            .hero-stat-num {
+                font-family: var(--serif);
+                font-size: 36px;
+                color: var(--blue);
+                display: block;
+                line-height: 1;
+                margin-bottom: 6px;
+            }
+            .hero-stat-num {
+                font-family: var(--serif);
+                font-size: 36px;
+                color: var(--blue);
+                display: block;
+                line-height: 1;
+                margin-bottom: 6px;
+            }
+            .hero-stat-label {
+                font-size: 12px;
+                color: var(--slate-mid);
+                line-height: 1.4;
+            }
+
+            /* ── TRUST BAR ── */
+            .trust-bar {
+                background: var(--blue-light);
+                border-top: 1px solid #c7d2fe;
+                border-bottom: 1px solid #c7d2fe;
+                padding: 20px 32px;
+            }
+            .trust-bar-inner {
+                max-width: 1100px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 40px;
+                flex-wrap: wrap;
+            }
+            .trust-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--blue);
+            }
+            .trust-item svg {
+                color: var(--cyan);
+                flex-shrink: 0;
+            }
+
+            /* ── SECTION WRAPPER ── */
+            .section {
+                padding: 96px 32px;
+            }
+            .section-alt {
+                background: var(--bg-alt);
+            }
+            .section-inner {
+                max-width: 1100px;
+                margin: 0 auto;
+            }
+            .section-label {
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 1.4px;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 12px;
+            }
+            .section-heading {
+                font-family: var(--serif);
+                font-size: clamp(28px, 3.5vw, 42px);
+                color: var(--slate);
+                letter-spacing: -0.5px;
+                line-height: 1.15;
+                margin-bottom: 16px;
+            }
+            .section-sub {
+                font-size: 16px;
+                color: var(--slate-mid);
+                max-width: 560px;
+                line-height: 1.7;
+                margin-bottom: 56px;
+            }
+
+            /* ── SERVICES ── */
+            .services-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 24px;
+            }
+            .service-card {
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 36px 28px;
+                transition:
+                    box-shadow 0.2s,
+                    transform 0.2s;
+                background: var(--bg);
+            }
+            .service-card:hover {
+                box-shadow: 0 8px 32px rgba(29, 64, 174, 0.08);
+                transform: translateY(-2px);
+            }
+            .service-icon {
+                width: 52px;
+                height: 52px;
+                border-radius: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            .service-icon.blue {
+                background: var(--blue-light);
+            }
+            .service-icon.cyan {
+                background: var(--cyan-light);
+            }
+            .service-icon.blue svg {
+                color: var(--blue);
+            }
+            .service-icon.cyan svg {
+                color: #0891b2;
+            }
+            .service-name {
+                font-family: var(--serif);
+                font-size: 22px;
+                color: var(--slate);
+                margin-bottom: 10px;
+                letter-spacing: -0.3px;
+            }
+            .service-desc {
+                font-size: 14px;
+                color: var(--slate-mid);
+                line-height: 1.7;
+                margin-bottom: 20px;
+            }
+            .service-tags {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .tag {
+                font-size: 11px;
+                font-weight: 500;
+                padding: 4px 10px;
+                border-radius: 20px;
+                background: var(--bg-alt);
+                color: var(--slate-mid);
+                border: 1px solid var(--border);
+            }
+
+            /* ── TEAM ── */
+            .team-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 28px;
+            }
+            .team-card {
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                overflow: hidden;
+                background: var(--bg);
+                transition: box-shadow 0.2s;
+            }
+            .team-card:hover {
+                box-shadow: 0 8px 32px rgba(29, 64, 174, 0.08);
+            }
+            .team-photo {
+                height: 220px;
+                display: flex;
+                align-items: flex-end;
+                padding: 20px;
+                position: relative;
+            }
+            .team-photo.photo-1 {
+                background: linear-gradient(160deg, #eef2ff 0%, #c7d2fe 100%);
+            }
+            .team-photo.photo-2 {
+                background: linear-gradient(160deg, #ecfeff 0%, #a5f3fc 100%);
+            }
+            .team-photo.photo-3 {
+                background: linear-gradient(160deg, #f0fdf4 0%, #bbf7d0 100%);
+            }
+            .team-photo-avatar {
+                width: 72px;
+                height: 72px;
+                border-radius: 50%;
+                border: 3px solid #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: var(--serif);
+                font-size: 26px;
+                color: var(--blue);
+                background: #fff;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+            .team-body {
+                padding: 24px 24px 28px;
+            }
+            .team-name {
+                font-family: var(--serif);
+                font-size: 20px;
+                color: var(--slate);
+                margin-bottom: 2px;
+                letter-spacing: -0.2px;
+            }
+            .team-role {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--cyan);
+                letter-spacing: 0.5px;
+                margin-bottom: 12px;
+            }
+            .team-bio {
+                font-size: 13px;
+                color: var(--slate-mid);
+                line-height: 1.65;
+            }
+
+            /* ── INTAKE SECTION ── */
+            .intake-layout {
+                display: grid;
+                grid-template-columns: 1fr 1.4fr;
+                gap: 64px;
+                align-items: start;
+            }
+            .intake-info h2 {
+                font-family: var(--serif);
+                font-size: clamp(26px, 3vw, 38px);
+                color: var(--slate);
+                letter-spacing: -0.5px;
+                line-height: 1.2;
+                margin-bottom: 16px;
+            }
+            .intake-info p {
+                font-size: 15px;
+                color: var(--slate-mid);
+                line-height: 1.7;
+                margin-bottom: 32px;
+            }
+            .intake-steps {
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .intake-step {
+                display: flex;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .step-num {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: var(--blue);
+                color: #fff;
+                font-size: 12px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                margin-top: 2px;
+            }
+            .step-text {
+                font-size: 14px;
+                color: var(--slate-mid);
+                line-height: 1.6;
+            }
+            .step-text strong {
+                color: var(--slate);
+                font-weight: 500;
+                display: block;
+                margin-bottom: 2px;
+            }
+            .tally-wrapper {
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                overflow: hidden;
+                background: var(--bg);
+                box-shadow: 0 4px 24px rgba(29, 64, 174, 0.06);
+            }
+            .tally-header {
+                background: var(--blue);
+                padding: 20px 28px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            .tally-header-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+            }
+            .tally-header-dot.active {
+                background: var(--cyan);
+            }
+            .tally-header span {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.8);
+                margin-left: 4px;
+                font-weight: 400;
+            }
+            .tally-embed {
+                padding: 0;
+            }
+            .tally-embed iframe {
+                width: 100%;
+                min-height: 480px;
+                border: none;
+                display: block;
+            }
+
+            /* ── FOOTER ── */
+            footer {
+                background: var(--slate);
+                color: rgba(255, 255, 255, 0.7);
+                padding: 56px 32px 32px;
+            }
+            .footer-inner {
+                max-width: 1100px;
+                margin: 0 auto;
+            }
+            .footer-top {
+                display: grid;
+                grid-template-columns: 1.5fr 1fr 1fr;
+                gap: 48px;
+                margin-bottom: 48px;
+            }
+            .footer-brand-name {
+                font-family: var(--serif);
+                font-size: 22px;
+                color: #fff;
+                margin-bottom: 10px;
+            }
+            .footer-brand-desc {
+                font-size: 13px;
+                line-height: 1.7;
+                max-width: 260px;
+            }
+            .footer-col-title {
+                font-size: 11px;
+                font-weight: 500;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                color: rgba(255, 255, 255, 0.4);
+                margin-bottom: 16px;
+            }
+            .footer-links {
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .footer-links a {
+                font-size: 13px;
+                color: rgba(255, 255, 255, 0.6);
+                text-decoration: none;
+                transition: color 0.2s;
+                cursor: pointer;
+            }
+            .footer-links a:hover {
+                color: #fff;
+            }
+            .footer-bottom {
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .footer-bottom span {
+                font-size: 12px;
+            }
+            .footer-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+            }
+            .footer-badge span {
+                color: var(--cyan);
+                font-weight: 500;
+            }
+
+            /* ── MOBILE ── */
+            @media (max-width: 768px) {
+                .hero {
+                    gap: 48px;
+                    padding: 48px 20px;
+                    min-height: auto;
+                }
+                .hero-main-grid {
+                    grid-template-columns: 1fr;
+                    gap: 48px;
+                }
+                .hero-visual {
+                    display: none;
+                }
+                .services-grid,
+                .team-grid {
+                    grid-template-columns: 1fr;
+                }
+                .intake-layout {
+                    grid-template-columns: 1fr;
+                    gap: 40px;
+                }
+                .footer-top {
+                    grid-template-columns: 1fr;
+                    gap: 32px;
+                }
+                .nav-links {
+                    display: none;
+                }
+                .nav-links.open {
+                    display: flex;
+                    flex-direction: column;
+                    position: absolute;
+                    top: var(--nav-h);
+                    left: 0;
+                    right: 0;
+                    background: #fff;
+                    border-bottom: 1px solid var(--border);
+                    padding: 20px 24px;
+                    gap: 16px;
+                }
+                .hamburger {
+                    display: flex;
+                }
+                .section {
+                    padding: 64px 20px;
+                }
+                .trust-bar-inner {
+                    gap: 20px;
+                }
+                .btn-primary-large {
+                    width: 100%;
+                    font-size: 20px;
+                    padding: 16px 32px;
+                }
+            }
+
+            /* ── ANIMATIONS ── */
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .fade-up {
+                animation: fadeUp 0.5s ease forwards;
+            }
+            .fade-up-1 {
+                animation-delay: 0.05s;
+                opacity: 0;
+            }
+            .fade-up-2 {
+                animation-delay: 0.15s;
+                opacity: 0;
+            }
+            .fade-up-3 {
+                animation-delay: 0.25s;
+                opacity: 0;
+            }
+            .fade-up-4 {
+                animation-delay: 0.35s;
+                opacity: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <div class="nav-inner">
+                <a class="nav-logo" href="#" onclick="showPage('home')">
+                    <img
+                        src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/cedar-healthcare-logo.png"
+                        alt="Cedar Healthcare"
+                        onerror="this.style.display = 'none'"
+                    />
+                </a>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="#" onclick="showPage('home')">Home</a></li>
+                    <li>
+                        <a href="#" onclick="showPage('services')">Services</a>
+                    </li>
+                    <li><a href="#" onclick="showPage('team')">Our team</a></li>
+                    <li>
+                        <a
+                            href="#"
+                            onclick="showPage('contact')"
+                            class="nav-cta"
+                            >Request appointment</a
+                        >
+                    </li>
+                </ul>
+                <button
+                    class="hamburger"
+                    id="hamburger"
+                    aria-label="Open menu"
+                    onclick="toggleMenu()"
+                >
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="page-section active" id="page-home">
+            <section class="hero">
+                <div class="hero-main-grid">
+                    <div>
+                        <div class="hero-eyebrow fade-up fade-up-1">
+                            Austin, Texas · Est. 2019
+                        </div>
+                        <h1 class="fade-up fade-up-2">
+                            Care that moves <em>you</em> forward
+                        </h1>
+                        <p class="hero-desc fade-up fade-up-3">
+                            Cedar Healthcare brings together physiotherapy,
+                            sports massage, and clinical nutrition under one
+                            roof — tailored treatment from practitioners who
+                            actually know your name.
+                        </p>
+                    </div>
+
+                    <div class="hero-visual fade-up fade-up-3">
+                        <div class="hero-card">
+                            <div class="hero-card-icon">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="hero-card-title">
+                                    Smart intake triage
+                                </div>
+                                <div class="hero-card-sub">
+                                    Urgent cases reviewed same day
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hero-card hero-stat">
+                            <span class="hero-stat-num">3</span>
+                            <span class="hero-stat-label"
+                                >specialist<br />practitioners</span
+                            >
+                        </div>
+                        <div class="hero-card hero-stat">
+                            <span
+                                class="hero-stat-num"
+                                style="color: var(--cyan)"
+                                >2019</span
+                            >
+                            <span class="hero-stat-label"
+                                >serving Austin<br />since</span
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hero-actions-centered fade-up fade-up-4">
+                    <a
+                        href="#"
+                        onclick="showPage('contact')"
+                        class="btn-primary-large"
+                        >Request appointment</a
+                    >
+                </div>
+            </section>
+
+            <div class="trust-bar">
+                <div class="trust-bar-inner">
+                    <div class="trust-item">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Licensed practitioners
+                    </div>
+                    <div class="trust-item">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Same-day urgent callbacks
+                    </div>
+                    <div class="trust-item">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Integrated wellness approach
+                    </div>
+                    <div class="trust-item">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Austin, TX · In-clinic &amp; telehealth
+                    </div>
+                </div>
+            </div>
+
+            <section class="section">
+                <div class="section-inner">
+                    <div class="section-label">What we treat</div>
+                    <h2 class="section-heading">
+                        Three disciplines,<br />one care team
+                    </h2>
+                    <p class="section-sub">
+                        Every patient gets a practitioner matched to their needs
+                        — not a waiting list.
+                    </p>
+                    <div class="services-grid">
+                        <div class="service-card">
+                            <div class="service-icon blue">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="service-name">Physiotherapy</div>
+                            <p class="service-desc">
+                                Rehabilitation, mobility recovery, and pain
+                                management guided by Dr. Ana Fuentes.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Post-surgery rehab</span>
+                                <span class="tag">Chronic pain</span>
+                                <span class="tag">Sports injury</span>
+                            </div>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon cyan">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="service-name">Sports massage</div>
+                            <p class="service-desc">
+                                Targeted soft tissue therapy and recovery
+                                protocols with Miguel Rivas LMT.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Deep tissue</span>
+                                <span class="tag">Recovery</span>
+                                <span class="tag">Pre/post event</span>
+                            </div>
+                        </div>
+                        <div class="service-card">
+                            <div class="service-icon blue">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                            </div>
+                            <div class="service-name">Clinical nutrition</div>
+                            <p class="service-desc">
+                                Evidence-based dietary plans and metabolic
+                                health support from Carla Mendoza RD.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Weight management</span>
+                                <span class="tag">Gut health</span>
+                                <span class="tag">Performance</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="page-section" id="page-services">
+            <section class="section">
+                <div class="section-inner">
+                    <div class="section-label">Our services</div>
+                    <h2 class="section-heading">What we offer</h2>
+                    <p class="section-sub">
+                        Specialised care across three disciplines — designed to
+                        work together for lasting results.
+                    </p>
+                    <div class="services-grid">
+                        <div class="service-card">
+                            <div class="service-icon blue">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="service-name">Physiotherapy</div>
+                            <p class="service-desc">
+                                Dr. Ana Fuentes uses evidence-based techniques
+                                to restore movement, reduce pain, and rebuild
+                                function after injury or surgery. Whether you're
+                                recovering from a procedure or managing a
+                                chronic condition, treatment is adapted to your
+                                body's specific needs.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Post-surgery rehab</span>
+                                <span class="tag">Chronic pain</span>
+                                <span class="tag">Sports injury</span>
+                                <span class="tag">Mobility</span>
+                                <span class="tag">Neurological rehab</span>
+                            </div>
+                        </div>
+
+                        <div class="service-card">
+                            <div class="service-icon cyan">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                                    />
+                                </svg>
+                            </div>
+                            <div class="service-name">Sports massage</div>
+                            <p class="service-desc">
+                                Miguel Rivas LMT specialises in soft tissue
+                                therapy for athletes and active patients.
+                                Sessions target muscle tension, improve
+                                circulation, and accelerate recovery — whether
+                                you're preparing for an event or coming back
+                                from one.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Deep tissue</span>
+                                <span class="tag">Pre/post event</span>
+                                <span class="tag">Trigger point</span>
+                                <span class="tag">Recovery</span>
+                                <span class="tag">Myofascial release</span>
+                            </div>
+                        </div>
+
+                        <div class="service-card">
+                            <div class="service-icon blue">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                            </div>
+                            <div class="service-name">Clinical nutrition</div>
+                            <p class="service-desc">
+                                Carla Mendoza RD creates personalised nutrition
+                                strategies rooted in clinical evidence. From
+                                metabolic health to gut function and performance
+                                fuelling, plans are built around your labs,
+                                lifestyle, and goals.
+                            </p>
+                            <div class="service-tags">
+                                <span class="tag">Weight management</span>
+                                <span class="tag">Gut health</span>
+                                <span class="tag">Metabolic health</span>
+                                <span class="tag">Performance</span>
+                                <span class="tag">Hormonal balance</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="
+                            margin-top: 56px;
+                            background: var(--blue);
+                            border-radius: 20px;
+                            padding: 48px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 32px;
+                            flex-wrap: wrap;
+                        "
+                    >
+                        <div>
+                            <div
+                                style="
+                                    font-family: var(--serif);
+                                    font-size: 28px;
+                                    color: #fff;
+                                    margin-bottom: 8px;
+                                    letter-spacing: -0.3px;
+                                "
+                            >
+                                Not sure which service you need?
+                            </div>
+                            <p
+                                style="
+                                    font-size: 15px;
+                                    color: rgba(255, 255, 255, 0.75);
+                                    max-width: 440px;
+                                    line-height: 1.6;
+                                "
+                            >
+                                Tell us what you're experiencing and our intake
+                                system will match you with the right
+                                practitioner — or flag urgent cases for same-day
+                                review.
+                            </p>
+                        </div>
+                        <a
+                            class="btn-primary"
+                            href="#"
+                            onclick="showPage('contact')"
+                            style="
+                                background: #fff;
+                                color: var(--blue);
+                                flex-shrink: 0;
+                            "
+                            >Request intake →</a
+                        >
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="page-section" id="page-team">
+            <section class="section">
+                <div class="section-inner">
+                    <div class="section-label">The practitioners</div>
+                    <h2 class="section-heading">
+                        Small team,<br />deep expertise
+                    </h2>
+                    <p class="section-sub">
+                        Three licensed specialists who collaborate directly on
+                        your care — no referral maze, no front desk delay.
+                    </p>
+                    <div class="team-grid">
+                        <div class="team-card">
+                            <div class="team-photo photo-1">
+                                <div class="team-photo-avatar">AF</div>
+                            </div>
+                            <div class="team-body">
+                                <div class="team-name">Dr. Ana Fuentes</div>
+                                <div class="team-role">Physiotherapy · DPT</div>
+                                <p class="team-bio">
+                                    Dr. Fuentes brings over a decade of clinical
+                                    experience in orthopaedic and sports
+                                    rehabilitation. She uses a movement-first
+                                    approach, combining manual therapy with
+                                    targeted exercise to restore function and
+                                    prevent re-injury. Fluent in English and
+                                    Spanish.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="team-card">
+                            <div class="team-photo photo-2">
+                                <div
+                                    class="team-photo-avatar"
+                                    style="color: #0891b2"
+                                >
+                                    MR
+                                </div>
+                            </div>
+                            <div class="team-body">
+                                <div class="team-name">Miguel Rivas</div>
+                                <div class="team-role">
+                                    Sports massage · LMT
+                                </div>
+                                <p class="team-bio">
+                                    Miguel is a licensed massage therapist with
+                                    a background in competitive athletics. His
+                                    sessions are precise and outcome-focused —
+                                    built around what the body actually needs to
+                                    recover and perform. He works closely with
+                                    Dr. Fuentes on shared patients.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="team-card">
+                            <div class="team-photo photo-3">
+                                <div
+                                    class="team-photo-avatar"
+                                    style="color: #059669"
+                                >
+                                    CM
+                                </div>
+                            </div>
+                            <div class="team-body">
+                                <div class="team-name">Carla Mendoza</div>
+                                <div class="team-role">
+                                    Clinical nutrition · RD
+                                </div>
+                                <p class="team-bio">
+                                    Carla is a registered dietitian specialising
+                                    in metabolic health, gut microbiome, and
+                                    performance nutrition. She partners with
+                                    patients to translate complex lab data into
+                                    practical, sustainable dietary changes — no
+                                    generic meal plans.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <div class="page-section" id="page-contact">
+            <section class="section">
+                <div class="section-inner">
+                    <div class="intake-layout">
+                        <div class="intake-info">
+                            <div class="section-label">
+                                Request an appointment
+                            </div>
+                            <h2>Tell us what's going on</h2>
+                            <p>
+                                Fill in the form and our team will review your
+                                request — urgent cases are flagged for same-day
+                                callback. You'll receive a confirmation email
+                                once submitted.
+                            </p>
+                            <ul class="intake-steps">
+                                <li class="intake-step">
+                                    <div class="step-num">1</div>
+                                    <div class="step-text">
+                                        <strong>Submit your request</strong>
+                                        Describe your symptoms or what you're
+                                        looking for — the more detail, the
+                                        better.
+                                    </div>
+                                </li>
+                                <li class="intake-step">
+                                    <div class="step-num">2</div>
+                                    <div class="step-text">
+                                        <strong>We triage your case</strong>
+                                        Our intake system reviews urgency and
+                                        matches you to the right practitioner.
+                                    </div>
+                                </li>
+                                <li class="intake-step">
+                                    <div class="step-num">3</div>
+                                    <div class="step-text">
+                                        <strong>We reach out</strong>
+                                        Expect a call or email within 24 hours —
+                                        sooner for urgent requests.
+                                    </div>
+                                </li>
+                            </ul>
+
+                            <div
+                                style="
+                                    margin-top: 32px;
+                                    padding: 20px 24px;
+                                    background: var(--cyan-light);
+                                    border: 1px solid #a5f3fc;
+                                    border-radius: 12px;
+                                "
+                            >
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        font-weight: 500;
+                                        color: #0e7490;
+                                        margin-bottom: 4px;
+                                    "
+                                >
+                                    Austin, TX
+                                </div>
+                                <div
+                                    style="
+                                        font-size: 13px;
+                                        color: var(--slate-mid);
+                                        line-height: 1.6;
+                                    "
+                                >
+                                    In-clinic and telehealth appointments
+                                    available.<br />Response within 24 hours ·
+                                    Urgent cases same day.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tally-wrapper">
+                            <div class="tally-embed">
+                                <iframe
+                                    src="https://tally.so/r/2EDkgL"
+                                    loading="lazy"
+                                    width="100%"
+                                    height="567"
+                                    frameborder="0"
+                                    marginheight="0"
+                                    marginwidth="0"
+                                    title="Cedar Healthcare intake form"
+                                ></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        <footer>
+            <div class="footer-inner">
+                <div class="footer-top">
+                    <div>
+                        <div class="footer-brand-name">Cedar Healthcare</div>
+                        <p class="footer-brand-desc">
+                            A wellness clinic in Austin, Texas offering
+                            physiotherapy, sports massage, and clinical
+                            nutrition since 2019.
+                        </p>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Navigate</div>
+                        <ul class="footer-links">
+                            <li><a onclick="showPage('home')">Home</a></li>
+                            <li>
+                                <a onclick="showPage('services')">Services</a>
+                            </li>
+                            <li><a onclick="showPage('team')">Our team</a></li>
+                            <li>
+                                <a onclick="showPage('contact')"
+                                    >Request appointment</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <div class="footer-col-title">Services</div>
+                        <ul class="footer-links">
+                            <li>
+                                <a onclick="showPage('services')"
+                                    >Physiotherapy</a
+                                >
+                            </li>
+                            <li>
+                                <a onclick="showPage('services')"
+                                    >Sports massage</a
+                                >
+                            </li>
+                            <li>
+                                <a onclick="showPage('services')"
+                                    >Clinical nutrition</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span>© 2026 Cedar Healthcare · All Rights Reserved</span>
+                    <div class="footer-badge">
+                        Built with
+                        <span>· Railway · n8n · Supabase · Tally</span>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            function showPage(id) {
+                document
+                    .querySelectorAll(".page-section")
+                    .forEach((s) => s.classList.remove("active"));
+                const target = document.getElementById("page-" + id);
+                if (target) {
+                    target.classList.add("active");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+                document.getElementById("navLinks").classList.remove("open");
+            }
+
+            function toggleMenu() {
+                document.getElementById("navLinks").classList.toggle("open");
+            }
+
+            // Load Tally embed script for dynamic height
+            var s = document.createElement("script");
+            s.src = "https://tally.so/widgets/embed.js";
+            s.async = true;
+            document.head.appendChild(s);
+        </script>
+    </body>
+</html>

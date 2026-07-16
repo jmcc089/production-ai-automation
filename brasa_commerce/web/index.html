@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brasa Commerce — Premium Cookware & Kitchen Goods</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,400..700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --terra: #C2522A;
+    --terra-dark: #A03F1E;
+    --charcoal: #2C2C2C;
+    --cream: #F5F0EA;
+    --cream-deep: #EBE3D8;
+    --white: #FFFFFF;
+    --text: #2C2C2C;
+    --muted: #8C7B70;
+    --display: 'Fraunces', Georgia, serif;
+    --body: 'Archivo', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--body);
+    color: var(--text);
+    background: var(--cream);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── NAV ─── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(245, 240, 234, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--cream-deep);
+  }
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo img { height: 38px; display: block; }
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+  nav a {
+    text-decoration: none;
+    color: var(--charcoal);
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--terra); }
+  .nav-cta {
+    background: var(--terra);
+    color: var(--white) !important;
+    padding: 10px 22px;
+    border-radius: 100px;
+    font-weight: 600;
+  }
+  .nav-cta:hover { background: var(--terra-dark); color: var(--white) !important; }
+  .hamburger { display: none; background: none; border: none; cursor: pointer; font-size: 24px; color: var(--charcoal); }
+
+  /* ─── HERO ─── */
+  .hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 90px 32px 70px;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 60px;
+    align-items: center;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 22px;
+  }
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(42px, 5.5vw, 76px);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -1px;
+    margin-bottom: 26px;
+    color: var(--charcoal);
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--terra);
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 440px;
+    margin-bottom: 36px;
+  }
+  .hero-actions { display: flex; gap: 16px; align-items: center; }
+  .btn-primary {
+    background: var(--terra);
+    color: var(--white);
+    text-decoration: none;
+    padding: 15px 32px;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 15px;
+    transition: transform 0.2s, background 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--terra-dark); transform: translateY(-2px); }
+  .btn-ghost {
+    color: var(--charcoal);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border-bottom: 2px solid var(--charcoal);
+    padding-bottom: 2px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--terra); border-color: var(--terra); }
+
+  .hero-visual {
+    position: relative;
+    aspect-ratio: 4/5;
+    border-radius: 18px;
+    overflow: hidden;
+    background: var(--charcoal);
+  }
+  .hero-visual img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hero-badge {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    background: rgba(245, 240, 234, 0.95);
+    backdrop-filter: blur(8px);
+    padding: 16px 22px;
+    border-radius: 12px;
+  }
+  .hero-badge strong { font-family: var(--display); font-size: 22px; display: block; color: var(--charcoal); }
+  .hero-badge span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ─── TRUST BAR ─── */
+  .trust {
+    background: var(--charcoal);
+    color: var(--cream);
+  }
+  .trust-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 24px;
+    text-align: center;
+  }
+  .trust-item strong {
+    font-family: var(--display);
+    font-size: 30px;
+    color: var(--terra);
+    display: block;
+  }
+  .trust-item span { font-size: 13px; color: rgba(245,240,234,0.7); letter-spacing: 0.5px; }
+
+  /* ─── SECTION HEADERS ─── */
+  .section { max-width: 1200px; margin: 0 auto; padding: 80px 32px; }
+  .section-head { text-align: center; margin-bottom: 54px; }
+  .section-head .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--terra); display: block; margin-bottom: 14px;
+  }
+  .section-head h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(32px, 4vw, 48px); color: var(--charcoal);
+    letter-spacing: -0.5px;
+  }
+  .section-head p { color: var(--muted); margin-top: 14px; font-size: 17px; }
+
+  /* ─── PRODUCTS ─── */
+  .products {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .product {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    border: 1px solid var(--cream-deep);
+  }
+  .product:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(44,44,44,0.12); }
+  .product-img { aspect-ratio: 1; overflow: hidden; background: var(--cream-deep); }
+  .product-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+  .product:hover .product-img img { transform: scale(1.05); }
+  .product-body { padding: 22px 24px 26px; }
+  .product-cat {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--terra); margin-bottom: 8px;
+  }
+  .product h3 { font-family: var(--display); font-size: 22px; font-weight: 500; color: var(--charcoal); margin-bottom: 8px; }
+  .product p { font-size: 14px; color: var(--muted); margin-bottom: 18px; min-height: 40px; }
+  .product-foot { display: flex; align-items: center; justify-content: space-between; }
+  .price { font-family: var(--display); font-size: 24px; font-weight: 600; color: var(--charcoal); }
+  .add-btn {
+    background: var(--charcoal); color: var(--white); border: none;
+    padding: 10px 18px; border-radius: 100px; font-family: var(--body);
+    font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s;
+  }
+  .add-btn:hover { background: var(--terra); }
+
+  /* ─── STORY ─── */
+  .story { background: var(--cream-deep); }
+  .story-inner {
+    max-width: 1200px; margin: 0 auto; padding: 90px 32px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+  }
+  .story-visual { aspect-ratio: 5/4; border-radius: 18px; overflow: hidden; }
+  .story-visual img { width: 100%; height: 100%; object-fit: cover; }
+  .story-text .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--terra); display: block; margin-bottom: 16px;
+  }
+  .story-text h2 {
+    font-family: var(--display); font-weight: 400; font-size: clamp(30px, 4vw, 44px);
+    color: var(--charcoal); margin-bottom: 20px; letter-spacing: -0.5px; line-height: 1.1;
+  }
+  .story-text p { color: var(--text); font-size: 16px; margin-bottom: 18px; }
+
+  /* ─── SUPPORT / TALLY ─── */
+  .support { background: var(--charcoal); color: var(--cream); }
+  .support-inner { max-width: 760px; margin: 0 auto; padding: 80px 32px; }
+  .support-head { text-align: center; margin-bottom: 40px; }
+  .support-head .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.5px;
+    text-transform: uppercase; color: var(--terra); display: block; margin-bottom: 14px;
+  }
+  .support-head h2 { font-family: var(--display); font-weight: 400; font-size: clamp(30px, 4vw, 44px); }
+  .support-head p { color: rgba(245,240,234,0.7); margin-top: 14px; font-size: 16px; }
+  .tally-wrap {
+    background: var(--white); border-radius: 18px; padding: 12px;
+    overflow: hidden;
+  }
+  .tally-wrap iframe { width: 100%; border: none; border-radius: 12px; display: block; }
+
+  /* ─── FOOTER ─── */
+  footer { background: var(--cream); border-top: 1px solid var(--cream-deep); }
+  .footer-inner {
+    max-width: 1200px; margin: 0 auto; padding: 48px 32px 36px;
+    display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 32px;
+  }
+  .footer-brand img { height: 40px; margin-bottom: 14px; }
+  .footer-brand p { color: var(--muted); font-size: 14px; max-width: 280px; }
+  .footer-cols { display: flex; gap: 64px; flex-wrap: wrap; }
+  .footer-col h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--charcoal); margin-bottom: 14px; }
+  .footer-col a { display: block; color: var(--muted); text-decoration: none; font-size: 14px; margin-bottom: 9px; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--terra); }
+  .footer-bottom {
+    max-width: 1200px; margin: 0 auto; padding: 22px 32px;
+    border-top: 1px solid var(--cream-deep); display: flex; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-bottom p { font-size: 13px; color: var(--muted); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 56px; }
+    .hero-visual { max-width: 440px; }
+    .products { grid-template-columns: repeat(2, 1fr); }
+    .story-inner { grid-template-columns: 1fr; }
+    .story-visual { order: -1; }
+  }
+  @media (max-width: 640px) {
+    nav ul { display: none; }
+    .hamburger { display: block; }
+    .products { grid-template-columns: 1fr; }
+    .nav-inner { padding: 14px 20px; }
+    .section { padding: 56px 20px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <header>
+    <div class="nav-inner">
+      <a href="#" class="logo">
+        <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo.svg" alt="Brasa Commerce">
+      </a>
+      <nav>
+        <ul>
+          <li><a href="#shop">Shop</a></li>
+          <li><a href="#story">Our Story</a></li>
+          <li><a href="#support" class="nav-cta">Get Help</a></li>
+        </ul>
+      </nav>
+      <button class="hamburger" onclick="document.querySelector('nav ul').style.display = document.querySelector('nav ul').style.display === 'flex' ? 'none' : 'flex'">☰</button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <span class="hero-eyebrow">Premium Cookware · Made for Cooks</span>
+      <h1>Tools that <em>outlast</em> the trends.</h1>
+      <p>Hand-finished cast iron, carbon steel, and enameled ceramic — built in the tradition of cookware that gets passed down, not thrown out.</p>
+      <div class="hero-actions">
+        <a href="#shop" class="btn-primary">Explore the Collection</a>
+        <a href="#story" class="btn-ghost">Our craft</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=900&q=80" alt="Cast iron skillet on a stovetop">
+      <div class="hero-badge">
+        <strong>Seasoned by hand</strong>
+        <span>Three-layer flaxseed cure</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST BAR -->
+  <div class="trust">
+    <div class="trust-inner">
+      <div class="trust-item"><strong>Free</strong><span>Shipping over $75</span></div>
+      <div class="trust-item"><strong>30 Day</strong><span>Returns, no questions</span></div>
+      <div class="trust-item"><strong>Lifetime</strong><span>Cast iron warranty</span></div>
+      <div class="trust-item"><strong>USA</strong><span>Ships continental US</span></div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS -->
+  <section class="section" id="shop">
+    <div class="section-head">
+      <span class="eyebrow">The Collection</span>
+      <h2>Cookware worth keeping</h2>
+      <p>Every piece is chosen to last decades, not seasons.</p>
+    </div>
+    <div class="products">
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20No.10%20Cast%20Iron%20Skillet.webp" alt="Brasa No.10 Cast Iron Skillet"></div>
+        <div class="product-body">
+          <div class="product-cat">Cast Iron</div>
+          <h3>Brasa No.10 Cast Iron Skillet</h3>
+          <p>Flagship 10-inch cast iron skillet. Pre-seasoned with three layers of flaxseed oil. 5mm wall thickness for exceptional heat retention. Helper handle and dual pour spouts.</p>
+          <div class="product-foot">
+            <span class="price">$85</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20No.12%20Cast%20Iron%20Skillet.webp" alt="BBrasa No.12 Cast Iron Skillet"></div>
+        <div class="product-body">
+          <div class="product-cat">Cast Iron</div>
+          <h3>Brasa No.12 Cast Iron Skillet</h3>
+          <p>Larger 12-inch cast iron skillet. Pre-seasoned with three layers of flaxseed oil. 5mm wall thickness for exceptional heat retention. Helper handle and dual pour spout.</p>
+          <div class="product-foot">
+            <span class="price">$105</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Carbon%20Steel%20Skillet%2010.webp" alt="Brasa Carbon Steel Skillet 10""></div>
+        <div class="product-body">
+          <div class="product-cat">Carbon Steel</div>
+          <h3>Brasa Carbon Steel Skillet 10"</h3>
+          <p>Professional-grade 10-inch carbon steel skillet with 2mm thick, french-style with long handle. Lighter than cast iron, heats faster, develops non-stick patina with daily use.</p>
+          <div class="product-foot">
+            <span class="price">$125</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Ceramic%20Non-Stick%20Skillet%2010.webp" alt="Brasa Ceramic Non-Stick Skillet 10"></div>
+        <div class="product-body">
+          <div class="product-cat">Ceramic Non-Stick</div>
+          <h3>Brasa Ceramic Non-Stick Skillet 10"</h3>
+          <p>Ceramic-coated aluminum skillet for everyday cooking. PFAS-free, PTFE-free coating. Dishwasher safe. Stays cool handle. Ideal for eggs and delicate fish.</p>
+          <div class="product-foot">
+            <span class="price">$65</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Universal%20Glass%20Lid%2010.webp" alt="Brasa Universal Glass Lid 10""></div>
+        <div class="product-body">
+          <div class="product-cat">Brasa Accessories</div>
+          <h3>Brasa Universal Glass Lid 10"</h3>
+          <p>High quality tempered glass lid with steam vent. Fits all Brasa 10-inch skillets (cast iron, carbon steel, ceramic). Stainless steel rim.</p>
+          <div class="product-foot">
+            <span class="price">$28</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="product">
+        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Cast%20Iron%20Scrubber%20Set.webp" alt="Brasa Cast Iron Scrubber Set"></div>
+             <div class="product-body">
+          <div class="product-cat">Brasa Accessories</div>
+          <h3>Brasa Cast Iron Scrubber Set</h3>
+          <p>Premium and luxury material quality care set for cleaning and care cast iron and carbon steel. Not for use with ceramic-coated pans.</p>
+          <div class="product-foot">
+            <span class="price">$22</span>
+            <button class="add-btn">Add to Cart</button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="story" id="story">
+    <div class="story-inner">
+      <div class="story-text">
+        <span class="eyebrow">Our Story</span>
+        <h2>Founded in Chicago, built for the long haul</h2>
+        <p>Brasa started in 2021 with a simple frustration: cookware that wears out faster than the meals it makes. We wanted pans that improve with age — that carry the memory of every sear and simmer.</p>
+        <p>Each piece is hand-finished and pre-seasoned in small batches. No nonstick coatings to flake, no planned obsolescence. Just honest tools that reward the cooks who use them.</p>
+      </div>
+      <div class="story-visual">
+        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="Cooking with cast iron">
+      </div>
+    </div>
+  </section>
+
+  <!-- SUPPORT / TALLY -->
+  <section class="support" id="support">
+    <div class="support-inner">
+      <div class="support-head">
+        <span class="eyebrow">Customer Support</span>
+        <h2>Need a hand?</h2>
+        <p>Order questions, product care, returns — send us a message and our team (with a little help from AI) will get back to you fast.</p>
+      </div>
+      <div class="tally-wrap">
+        <iframe
+          src="https://tally.so/embed/javEX9?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+          loading="lazy"
+          width="100%"
+          height="415"
+          title="Brasa Commerce Support Form"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo.svg" alt="Brasa Commerce">
+        <p>Premium cookware and kitchen goods, made for cooks who keep their tools for life.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <a href="#shop">Cast Iron</a>
+          <a href="#shop">Carbon Steel</a>
+          <a href="#shop">Ceramic</a>
+          <a href="#shop">Accessories</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#story">Our Story</a>
+          <a href="#support">Support</a>
+          <a href="#support">Returns</a>
+          <a href="#support">Contact</a>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <a href="#">Instagram</a>
+          <a href="#">Newsletter</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Brasa Commerce LLC · Chicago, IL</p>
+      <p>Crafted for the long haul.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

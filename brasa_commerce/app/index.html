@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brasa Commerce — Support Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --terra: #C2522A;
+    --terra-light: #FFF7F4;
+    --charcoal: #2C2C2C;
+    --cream: #F5F0EA;
+    --white: #FFFFFF;
+    --border: #E8E0D8;
+    --muted: #8C7B70;
+    --sidebar: 320px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: 'Archivo', sans-serif; background: var(--cream); color: var(--charcoal); display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+
+  /* ── TOP NAV ── */
+  .topnav {
+    background: var(--charcoal); height: 52px; display: flex;
+    align-items: center; padding: 0 24px; gap: 14px;
+    flex-shrink: 0; z-index: 10;
+  }
+  .topnav-logo { height: 28px; display: block; }
+  .topnav-title { color: #9CA3AF; font-size: 13px; }
+  .topnav-title span { color: var(--white); font-weight: 600; }
+  .topnav-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .badge-count { background: var(--terra); color: var(--white); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
+  .refresh-btn {
+    background: transparent; border: 1px solid #4B5563; color: #D1D5DB;
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    font-family: 'Archivo', sans-serif; transition: border-color 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--terra); color: var(--white); }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar); flex-shrink: 0; background: var(--white);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-stats {
+    display: flex; padding: 14px 16px; gap: 0;
+    border-bottom: 1px solid var(--border); background: #FAFAFA; flex-shrink: 0;
+  }
+  .stat { flex: 1; text-align: center; padding: 6px 0; }
+  .stat-num { font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; display: block; }
+  .stat-lab { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-div { width: 1px; background: var(--border); margin: 4px 0; }
+
+  .sidebar-filters {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 5px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  .filter-btn {
+    padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 500;
+    border: none; cursor: pointer; background: #F3F4F6; color: #4B5563;
+    font-family: 'Archivo', sans-serif; transition: all 0.15s; text-transform: capitalize;
+  }
+  .filter-btn.active { background: var(--terra); color: var(--white); }
+
+  .sidebar-search { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .sidebar-search input {
+    width: 100%; padding: 8px 12px; font-size: 13px; border: 1px solid var(--border);
+    border-radius: 6px; outline: none; background: #F9FAFB; font-family: 'Archivo', sans-serif;
+    color: var(--charcoal);
+  }
+  .sidebar-search input:focus { border-color: var(--terra); }
+
+  .ticket-list { flex: 1; overflow-y: auto; }
+  .ticket-item {
+    padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer;
+    border-left: 3px solid transparent; transition: all 0.15s; background: var(--white);
+  }
+  .ticket-item:hover { background: #FFF7F5; }
+  .ticket-item.active { background: #FFF7F5; border-left-color: var(--terra); }
+  .ti-row1 { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .ti-name { font-size: 13px; font-weight: 600; color: var(--charcoal); }
+  .ti-time { font-size: 11px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  .ti-row2 { margin-bottom: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .ti-preview { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  /* ── INTENT BADGES ── */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 99px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .b-order   { background: #EFF6FF; color: #1D4ED8; }
+  .b-return  { background: #F5F3FF; color: #7C3AED; }
+  .b-product { background: #ECFDF5; color: #059669; }
+  .b-complaint { background: #FEF2F2; color: #DC2626; }
+  .b-other   { background: #F9FAFB; color: #6B7280; }
+  .b-esc     { background: #FEF2F2; color: #DC2626; font-size: 9px; padding: 2px 6px; }
+
+  /* Status badges */
+  .b-draft    { background: #FFF7F4; color: var(--terra); border: 1px solid #FDDDD0; }
+  .b-approved { background: #ECFDF5; color: #059669; }
+  .b-escalated{ background: #FEF2F2; color: #DC2626; }
+  .b-sent     { background: #F0FDF4; color: #166534; }
+
+  /* ── MAIN DETAIL ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #F9FAFB; }
+  .empty-state {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px; color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; }
+  .empty-state p { font-size: 14px; }
+
+  .detail-wrap { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+  .detail-header {
+    background: var(--white); padding: 20px 24px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .dh-row1 { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 99px; background: var(--terra-light);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fraunces', Georgia, serif; font-size: 16px; font-weight: 600; color: var(--terra);
+    flex-shrink: 0;
+  }
+  .dh-name { font-size: 15px; font-weight: 600; color: var(--charcoal); }
+  .dh-email { font-size: 12px; color: var(--muted); }
+  .dh-meta { font-size: 12px; color: var(--muted); margin-left: auto; text-align: right; }
+  .dh-row2 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  /* ── SECTIONS ── */
+  .section-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .msg-box {
+    background: #F9FAFB; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 18px; font-size: 14px; color: #374151; line-height: 1.75; margin-bottom: 20px;
+  }
+  .conf-block { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; }
+  .conf-row { display: flex; align-items: center; gap: 10px; }
+  .conf-bar-wrap { flex: 1; height: 6px; background: #E5E7EB; border-radius: 99px; }
+  .conf-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+  .conf-num { font-size: 12px; font-weight: 700; font-family: monospace; min-width: 36px; }
+  .conf-context { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* ── REPLY EDITOR ── */
+  .reply-block { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+  .reply-block textarea {
+    width: 100%; padding: 12px 14px; font-size: 14px; line-height: 1.75;
+    border: 1.5px solid var(--border); border-radius: 6px; resize: vertical; min-height: 120px;
+    outline: none; font-family: 'Archivo', sans-serif; color: var(--charcoal);
+    background: #FAFAFA; transition: border-color 0.2s;
+  }
+  .reply-block textarea:focus { border-color: var(--terra); }
+  .reply-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── NOTES ── */
+  .notes-block { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+  .note-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .note-item:last-child { border-bottom: none; }
+  .note-text { font-size: 13px; color: var(--charcoal); line-height: 1.6; margin-bottom: 4px; }
+  .note-by { font-size: 11px; color: var(--muted); }
+  .note-form { display: flex; gap: 8px; margin-top: 12px; }
+  .note-form input {
+    flex: 1; padding: 9px 12px; font-size: 13px; border: 1px solid var(--border);
+    border-radius: 6px; outline: none; font-family: 'Archivo', sans-serif; color: var(--charcoal);
+  }
+  .note-form input:focus { border-color: var(--terra); }
+  .note-form button {
+    background: var(--charcoal); color: var(--white); border: none; padding: 9px 16px;
+    border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: 'Archivo', sans-serif; transition: background 0.2s; white-space: nowrap;
+  }
+  .note-form button:hover { background: var(--terra); }
+
+  /* ── ACTION BAR ── */
+  .action-bar {
+    padding: 16px 32px; background: var(--white); border-top: 1px solid var(--border);
+    display: flex; gap: 12px; flex-shrink: 0;
+  }
+  .btn-approve {
+    flex: 2; padding: 12px; border-radius: 8px; background: var(--terra);
+    color: var(--white); border: none; font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'Archivo', sans-serif; transition: background 0.2s, opacity 0.2s;
+  }
+  .btn-approve:hover { background: var(--terra-dark, #A03F1E); }
+  .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-escalate {
+    flex: 1; padding: 12px; border-radius: 8px; background: var(--white);
+    color: var(--charcoal); border: 2px solid var(--border); font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Archivo', sans-serif; transition: border-color 0.2s;
+  }
+  .btn-escalate:hover { border-color: #DC2626; color: #DC2626; }
+  .btn-escalate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ── CUSTOMER INFO PANEL ── */
+  .customer-block { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; }
+  .cust-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .cust-row span:first-child { color: var(--muted); }
+  .cust-row span:last-child { font-weight: 500; color: var(--charcoal); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    max-width: 340px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    animation: slideIn 0.2s ease; font-family: 'Archivo', sans-serif;
+  }
+  .toast-success { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+  .toast-error   { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; }
+  .toast-warn    { background: #FFFBEB; color: #D97706; border: 1px solid #FCD34D; }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo-w.webp" alt="Brasa" class="topnav-logo">
+  <span class="topnav-title"><span>Support Desk</span> · Agent View</span>
+  <div class="topnav-right">
+    <span class="badge-count" id="esc-count" style="display:none"></span>
+    <button class="refresh-btn" onclick="loadTickets()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-stats">
+      <div class="stat">
+        <span class="stat-num" id="stat-draft" style="color:var(--terra)">—</span>
+        <span class="stat-lab">Draft</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <span class="stat-num" id="stat-esc" style="color:#DC2626">—</span>
+        <span class="stat-lab">Escalated</span>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat">
+        <span class="stat-num" id="stat-total" style="color:var(--charcoal)">—</span>
+        <span class="stat-lab">Total</span>
+      </div>
+    </div>
+
+    <div class="sidebar-filters" id="status-filters">
+      <button class="filter-btn active" data-status="draft" onclick="setFilter('status','draft',this)">Draft</button>
+      <button class="filter-btn" data-status="escalated" onclick="setFilter('status','escalated',this)">Escalated</button>
+      <button class="filter-btn" data-status="approved" onclick="setFilter('status','approved',this)">Approved</button>
+      <button class="filter-btn" data-status="sent" onclick="setFilter('status','sent',this)">Sent</button>
+      <button class="filter-btn" data-status="all" onclick="setFilter('status','all',this)">All</button>
+    </div>
+
+    <div class="sidebar-filters" id="intent-filters">
+      <button class="filter-btn active" data-intent="all" onclick="setFilter('intent','all',this)">All intents</button>
+      <button class="filter-btn" data-intent="order_status" onclick="setFilter('intent','order_status',this)">Orders</button>
+      <button class="filter-btn" data-intent="return_request" onclick="setFilter('intent','return_request',this)">Returns</button>
+      <button class="filter-btn" data-intent="product_question" onclick="setFilter('intent','product_question',this)">Products</button>
+      <button class="filter-btn" data-intent="complaint" onclick="setFilter('intent','complaint',this)">Complaints</button>
+    </div>
+
+    <div class="sidebar-search">
+      <input type="text" id="search-input" placeholder="Search tickets…" oninput="renderList()">
+    </div>
+
+    <div class="ticket-list" id="ticket-list">
+      <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">Loading tickets…</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+    <div class="empty-state">
+      <div class="empty-icon">✉️</div>
+      <p>Select a ticket to review</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "__RAILWAY_URL__";
+const SUPABASE_KEY = "__RAILWAY_KEY__";
+const APPROVE_WEBHOOK = 'https://n8n-production-3503.up.railway.app/webhook/brasa-approve';
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let tickets       = [];
+let customers     = {};
+let selectedId    = null;
+let editedReply   = '';
+let filters       = { status: 'draft', intent: 'all' };
+
+// ── SUPABASE HELPER ───────────────────────────────────────────────────────────
+async function sb(path, options = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: options.prefer || 'return=representation',
+      ...options.headers
+    }
+  });
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// ── LOAD TICKETS ──────────────────────────────────────────────────────────────
+async function loadTickets() {
+  try {
+    const data = await sb('bc_support_tickets?select=*&order=created_at.desc&limit=200');
+    tickets = data || [];
+
+    // Load unique customers
+    const ids = [...new Set(tickets.map(t => t.customer_id).filter(Boolean))];
+    if (ids.length) {
+      const custData = await sb(`bc_customers?id=in.(${ids.join(',')})&select=id,full_name,email,phone,total_tickets`);
+      customers = Object.fromEntries((custData || []).map(c => [c.id, c]));
+    }
+
+    updateStats();
+    renderList();
+    if (selectedId) renderDetail(tickets.find(t => t.id === selectedId));
+  } catch(e) {
+    showToast('Failed to load tickets: ' + e.message, 'error');
+  }
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const draft    = tickets.filter(t => t.status === 'draft').length;
+  const esc      = tickets.filter(t => t.status === 'escalated').length;
+  document.getElementById('stat-draft').textContent  = draft;
+  document.getElementById('stat-esc').textContent    = esc;
+  document.getElementById('stat-total').textContent  = tickets.length;
+  const escBadge = document.getElementById('esc-count');
+  if (esc > 0) { escBadge.textContent = esc + ' needs review'; escBadge.style.display = ''; }
+  else { escBadge.style.display = 'none'; }
+}
+
+// ── FILTERS ───────────────────────────────────────────────────────────────────
+function setFilter(type, value, btn) {
+  filters[type] = value;
+  const group = type === 'status' ? 'status-filters' : 'intent-filters';
+  document.querySelectorAll(`#${group} .filter-btn`).forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── RENDER LIST ───────────────────────────────────────────────────────────────
+function renderList() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  let list = tickets;
+
+  if (filters.status !== 'all') list = list.filter(t => t.status === filters.status);
+  if (filters.intent !== 'all') list = list.filter(t => t.intent === filters.intent);
+  if (q) list = list.filter(t => {
+    const c = customers[t.customer_id];
+    return (c?.full_name || '').toLowerCase().includes(q) ||
+           (c?.email || '').toLowerCase().includes(q) ||
+           (t.raw_message || '').toLowerCase().includes(q);
+  });
+
+  const container = document.getElementById('ticket-list');
+  if (!list.length) { container.innerHTML = '<div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">No tickets found</div>'; return; }
+
+  container.innerHTML = list.map(t => {
+    const c   = customers[t.customer_id] || {};
+    const name = c.full_name || 'Unknown';
+    const dt   = new Date(t.created_at);
+    const time = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const preview = (t.raw_message || '').slice(0, 72) + ((t.raw_message || '').length > 72 ? '…' : '');
+    const intentBadge = intentBadgeHtml(t.intent);
+    const escTag = t.escalate_flag && t.status === 'draft' ? `<span class="badge b-esc">⚑ ESC</span>` : '';
+
+    return `<div class="ticket-item ${selectedId === t.id ? 'active' : ''}" onclick="selectTicket('${t.id}')">
+      <div class="ti-row1">
+        <span class="ti-name">${esc(name)}</span>
+        ${escTag}
+        <span class="ti-time">${date} ${time}</span>
+      </div>
+      <div class="ti-row2">${intentBadge} <span class="badge b-${t.status}">${t.status}</span></div>
+      <div class="ti-preview">${esc(preview)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SELECT TICKET ─────────────────────────────────────────────────────────────
+function selectTicket(id) {
+  selectedId = id;
+  const ticket = tickets.find(t => t.id === id);
+  editedReply  = ticket?.draft_reply || '';
+  renderList();
+  renderDetail(ticket);
+}
+
+// ── RENDER DETAIL ─────────────────────────────────────────────────────────────
+async function renderDetail(ticket) {
+  if (!ticket) return;
+  const main = document.getElementById('main');
+  const c    = customers[ticket.customer_id] || {};
+  const pct  = Math.round((ticket.confidence || 0) * 100);
+  const confColor = pct >= 85 ? '#059669' : pct >= 65 ? '#D97706' : '#DC2626';
+  const dt   = new Date(ticket.created_at);
+
+  // Load notes
+  let notes = [];
+  try {
+    notes = await sb(`bc_ticket_notes?ticket_id=eq.${ticket.id}&order=created_at.asc`);
+  } catch(e) {}
+
+  const escalateBanner = ticket.escalate_flag
+    ? `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:13px;font-weight:600;color:#dc2626;">🚨 Escalation recommended — review carefully before responding</div>`
+    : `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px;margin-bottom:20px;font-size:13px;font-weight:600;color:#166534;">✅ Standard ticket — AI confidence sufficient</div>`;
+
+  const notesHtml = notes.length
+    ? notes.map(n => `<div class="note-item"><div class="note-text">${esc(n.note)}</div><div class="note-by">${new Date(n.created_at).toLocaleString()} · ${n.note_type}</div></div>`).join('')
+    : '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No notes yet.</div>';
+
+  const isClosed = ticket.status === 'sent' || ticket.status === 'escalated';
+
+  main.innerHTML = `
+    <div class="detail-header">
+      <div class="dh-row1">
+        <div class="avatar">${(c.full_name || '?')[0].toUpperCase()}</div>
+        <div>
+          <div class="dh-name">${esc(c.full_name || 'Unknown Customer')}</div>
+          <div class="dh-email">${esc(c.email || '')}</div>
+        </div>
+        <div class="dh-meta">
+          ${dt.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}<br>
+          <span style="font-size:11px;font-family:monospace;color:#9CA3AF">${ticket.id.slice(0,8)}…</span>
+        </div>
+      </div>
+      <div class="dh-row2">
+        ${intentBadgeHtml(ticket.intent)}
+        <span class="badge b-${ticket.status}">${ticket.status}</span>
+        ${ticket.escalate_flag ? '<span class="badge b-esc">⚑ Escalate</span>' : ''}
+      </div>
+    </div>
+
+    <div class="detail-wrap">
+      ${escalateBanner}
+
+      <div class="section-label">Customer info</div>
+      <div class="customer-block">
+        <div class="cust-row"><span>Email</span><span>${esc(c.email || '—')}</span></div>
+        <div class="cust-row"><span>Phone</span><span>${esc(c.phone || '—')}</span></div>
+        <div class="cust-row"><span>Total tickets</span><span>${c.total_tickets || 1}</span></div>
+      </div>
+
+      <div class="section-label">Customer message</div>
+      <div class="msg-box">${esc(ticket.raw_message || '')}</div>
+
+      <div class="section-label">AI confidence</div>
+      <div class="conf-block">
+        <div class="conf-row">
+          <div class="conf-bar-wrap"><div class="conf-fill" style="width:${pct}%;background:${confColor}"></div></div>
+          <span class="conf-num" style="color:${confColor}">${pct}%</span>
+        </div>
+        ${ticket.context_used && ticket.context_used !== 'None' ? `<div class="conf-context"><strong>Context:</strong> ${esc(ticket.context_used)}</div>` : ''}
+      </div>
+
+      <div class="section-label">AI drafted reply — edit before approving</div>
+      <div class="reply-block">
+        <textarea id="reply-ta" ${isClosed ? 'disabled' : ''}>${esc(editedReply)}</textarea>
+        <div class="reply-meta" id="reply-meta"></div>
+      </div>
+
+      <div class="section-label">Internal notes</div>
+      <div class="notes-block">
+        <div id="notes-list">${notesHtml}</div>
+        <div class="note-form">
+          <input type="text" id="note-input" placeholder="Add an internal note…">
+          <button onclick="addNote('${ticket.id}')">Add Note</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-approve" onclick="approveTicket('${ticket.id}')" ${isClosed ? 'disabled' : ''}>
+        ${ticket.status === 'sent' ? '✓ Sent' : ticket.status === 'approved' ? '✓ Approved' : '✓ Approve'}
+      </button>
+      <button class="btn-escalate" onclick="escalateTicket('${ticket.id}')" ${ticket.status === 'escalated' ? 'disabled' : ''}>
+        ${ticket.status === 'escalated' ? 'Escalated' : '↑ Escalate'}
+      </button>
+    </div>`;
+
+  // Word count update
+  const ta = document.getElementById('reply-ta');
+  const meta = document.getElementById('reply-meta');
+  function updateMeta() {
+    const v = ta.value;
+    meta.textContent = v.length + ' chars · ' + v.split(' ').filter(Boolean).length + ' words';
+    editedReply = v;
+  }
+  if (ta) { ta.addEventListener('input', updateMeta); updateMeta(); }
+}
+
+// ── APPROVE ───────────────────────────────────────────────────────────────────
+async function approveTicket(id) {
+  const reply = document.getElementById('reply-ta')?.value || '';
+  if (!reply.trim()) { showToast('Reply is empty — nothing to send', 'error'); return; }
+  const ticket = tickets.find(t => t.id === id);
+  const c = ticket ? (customers[ticket.customer_id] || {}) : {};
+  try {
+    const res = await fetch(APPROVE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ticket_id: id,
+        customer_email: c.email || '',
+        customer_name: c.full_name || 'there',
+        final_reply: reply
+      })
+    });
+    if (!res.ok) throw new Error('Webhook returned ' + res.status);
+    showToast('Approved — reply sent to customer', 'success');
+    await loadTickets();
+    const updated = tickets.find(t => t.id === id);
+    if (updated) renderDetail(updated);
+  } catch (e) {
+    showToast('Failed to approve/send: ' + e.message, 'error');
+  }
+}
+
+// ── ESCALATE ─────────────────────────────────────────────────────────────────
+async function escalateTicket(id) {
+  try {
+    await sb(`bc_support_tickets?id=eq.${id}`, {
+      method: 'PATCH',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ status: 'escalated', updated_at: new Date().toISOString() })
+    });
+    showToast('Ticket escalated', 'warn');
+    await loadTickets();
+    const updated = tickets.find(t => t.id === id);
+    if (updated) renderDetail(updated);
+  } catch(e) {
+    showToast('Failed to escalate: ' + e.message, 'error');
+  }
+}
+
+// ── ADD NOTE ──────────────────────────────────────────────────────────────────
+async function addNote(ticketId) {
+  const input = document.getElementById('note-input');
+  const note  = (input?.value || '').trim();
+  if (!note) return;
+  try {
+    await sb('bc_ticket_notes', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify({ ticket_id: ticketId, note, note_type: 'Internal' })
+    });
+    input.value = '';
+    showToast('Note added', 'success');
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (ticket) renderDetail(ticket);
+  } catch(e) {
+    showToast('Failed to add note: ' + e.message, 'error');
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function intentBadgeHtml(intent) {
+  const map = {
+    order_status:     ['Order Status',      'b-order'],
+    return_request:   ['Return Request',    'b-return'],
+    product_question: ['Product Question',  'b-product'],
+    complaint:        ['Complaint',         'b-complaint'],
+    other:            ['General Inquiry',   'b-other']
+  };
+  const [label, cls] = map[intent] || ['Unknown', 'b-other'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast toast-' + type;
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadTickets();
+setInterval(loadTickets, 30000); // auto-refresh every 30s
+</script>
+</body>
+</html>

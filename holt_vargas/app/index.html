@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H&V Paralegal Dashboard</title>
+  <style>
+    :root {
+      --navy: #1E3A5F;
+      --navy-dark: #162d4a;
+      --navy-light: #2a4f7e;
+      --gold: #C9A84C;
+      --gold-light: #e8c96a;
+      --cream: #f8f6f0;
+      --white: #ffffff;
+      --text: #1a1a1a;
+      --text-light: #6b7280;
+      --border: #e8e3d8;
+      --green: #166534; --green-bg: #dcfce7;
+      --yellow: #92400e; --yellow-bg: #fef9c3;
+      --orange: #9a3412; --orange-bg: #ffedd5;
+      --red: #991b1b; --red-bg: #fee2e2;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: var(--cream); color: var(--text); }
+
+    .sidebar {
+      width: 240px; background: var(--navy); height: 100vh;
+      position: fixed; top: 0; left: 0; display: flex; flex-direction: column;
+    }
+    .sidebar-logo { padding: 28px 24px; border-bottom: 1px solid rgba(201,168,76,0.2); }
+    .sidebar-logo-name { color: var(--gold); font-size: 15px; font-weight: bold; letter-spacing: 2px; font-family: Georgia, serif; }
+    .sidebar-logo-sub { color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-nav { flex: 1; padding: 16px 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 24px; color: rgba(255,255,255,0.7);
+      cursor: pointer; transition: all 0.15s; font-size: 13px; text-decoration: none;
+    }
+    .nav-item:hover, .nav-item.active { background: rgba(201,168,76,0.12); color: var(--gold); }
+    .nav-icon { font-size: 16px; width: 20px; }
+    .sidebar-footer { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .user-name { color: var(--gold); font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+    .user-info { color: rgba(255,255,255,0.6); font-size: 12px; }
+
+    .main { margin-left: 240px; min-height: 100vh; }
+    .topbar {
+      background: var(--white); padding: 0 32px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-title { font-size: 18px; font-weight: bold; color: var(--navy); font-family: Georgia, serif; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .refresh-btn {
+      background: var(--navy); color: var(--gold); border: none;
+      padding: 8px 20px; border-radius: 4px; cursor: pointer;
+      font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: bold;
+    }
+    .refresh-btn:hover { background: var(--navy-light); }
+    .last-updated { font-size: 12px; color: var(--text-light); }
+
+    .tab-content { display: none; padding: 32px; }
+    .tab-content.active { display: block; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin-bottom: 32px; }
+    .stat-card {
+      background: var(--white); border-radius: 8px; padding: 24px;
+      border: 1px solid var(--border); position: relative; overflow: hidden;
+    }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--gold); }
+    .stat-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; }
+    .stat-value { font-size: 36px; font-weight: bold; color: var(--navy); font-family: Georgia, serif; }
+    .stat-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+    .stat-card.priority-card::before { background: var(--red); }
+    .stat-card.priority-card .stat-value { color: var(--red); }
+
+    .filters { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+    .filter-btn {
+      padding: 8px 18px; border-radius: 100px; font-size: 12px;
+      border: 1px solid var(--border); background: var(--white);
+      cursor: pointer; transition: all 0.15s; font-weight: bold;
+    }
+    .filter-btn:hover { border-color: var(--navy); color: var(--navy); }
+    .filter-btn.active { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+    .search-input {
+      padding: 8px 16px; border: 1px solid var(--border); border-radius: 100px;
+      font-size: 13px; width: 240px; outline: none; margin-left: auto;
+    }
+    .search-input:focus { border-color: var(--navy); }
+
+    .queue-card { background: var(--white); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
+    .queue-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .queue-title { font-size: 15px; font-weight: bold; color: var(--navy); font-family: Georgia, serif; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--cream); padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-light); border-bottom: 1px solid var(--border); font-weight: bold; }
+    td { padding: 16px; border-bottom: 1px solid #f5f2ec; font-size: 13px; vertical-align: middle; }
+    tr:hover td { background: #faf8f4; }
+    tr:last-child td { border-bottom: none; }
+
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: bold; }
+    .badge-complete { background: var(--green-bg); color: var(--green); }
+    .badge-review { background: var(--yellow-bg); color: var(--yellow); }
+    .badge-incomplete { background: var(--red-bg); color: var(--red); }
+    .badge-priority { background: var(--red-bg); color: var(--red); border: 1px solid rgba(153,27,27,0.3); }
+
+    .case-pill { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; background: rgba(30,58,95,0.08); color: var(--navy); }
+
+    .detail-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; }
+    .detail-panel {
+      position: fixed; right: 0; top: 0; bottom: 0; width: 520px;
+      background: var(--white); box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+      z-index: 201; overflow-y: auto; padding: 32px;
+      transform: translateX(100%); transition: transform 0.3s;
+    }
+    .detail-panel.open { transform: translateX(0); }
+    .detail-overlay.open { display: block; }
+    .panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+    .panel-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
+    .panel-name { font-size: 22px; font-weight: bold; color: var(--navy); font-family: Georgia, serif; }
+    .panel-meta { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+    .panel-section { margin-bottom: 24px; }
+    .panel-section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; font-weight: bold; }
+    .doc-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f5f2ec; font-size: 13px; }
+    .doc-item:last-child { border-bottom: none; }
+    .summary-box { background: var(--cream); border-left: 3px solid var(--gold); padding: 16px; border-radius: 0 6px 6px 0; font-size: 13px; line-height: 1.7; }
+    .priority-banner { background: var(--red-bg); border: 2px solid var(--red); border-radius: 6px; padding: 12px 16px; text-align: center; font-weight: bold; color: var(--red); margin-bottom: 20px; font-size: 13px; }
+
+    .loading { text-align: center; padding: 64px; color: var(--text-light); }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 64px; color: var(--text-light); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+
+    /* ANALYTICS */
+    .analytics-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; }
+    .analytics-card { background: var(--white); border-radius: 8px; border: 1px solid var(--border); padding: 24px; }
+    .analytics-title { font-size: 13px; font-weight: bold; color: var(--navy); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
+    .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .bar-label { font-size: 12px; color: var(--text-light); width: 140px; flex-shrink: 0; }
+    .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 100px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 100px; background: var(--navy); }
+    .bar-val { font-size: 12px; font-weight: bold; color: var(--navy); width: 30px; text-align: right; }
+
+    /* CLIENTS TABLE */
+    .client-status-active { color: var(--green); font-weight: bold; }
+    .client-status-inactive { color: var(--text-light); }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+  <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png" style="max-height:32px;width:auto;" alt="Holt & Vargas">
+</div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" onclick="showTab('queue', this)" href="#">
+      <span class="nav-icon">📋</span> Case Queue
+    </a>
+    <a class="nav-item" onclick="showTab('priority', this)" href="#">
+      <span class="nav-icon">🚨</span> Priority Flags
+    </a>
+    <a class="nav-item" onclick="showTab('clients', this)" href="#">
+      <span class="nav-icon">👥</span> Clients
+    </a>
+    <a class="nav-item" onclick="showTab('analytics', this)" href="#">
+      <span class="nav-icon">📊</span> Analytics
+    </a>
+  </nav>
+  </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Document Review Queue</div>
+    <div class="topbar-right">
+      <span class="last-updated" id="last-updated">Loading...</span>
+      <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- CASE QUEUE TAB -->
+  <div class="tab-content active" id="tab-queue">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Reviews</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-sub">all time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Complete Cases</div>
+        <div class="stat-value" id="stat-complete">—</div>
+        <div class="stat-sub">ready to file</div>
+      </div>
+      <div class="stat-card priority-card">
+        <div class="stat-label">Priority Flags</div>
+        <div class="stat-value" id="stat-priority">—</div>
+        <div class="stat-sub">need immediate review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Clients</div>
+        <div class="stat-value" id="stat-clients">—</div>
+        <div class="stat-sub">in system</div>
+      </div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterBy('all', this)">All Cases</button>
+      <button class="filter-btn" onclick="filterBy('Family Visa', this)">Family Visa</button>
+      <button class="filter-btn" onclick="filterBy('Employment-Based Green Card', this)">EB Green Card</button>
+      <button class="filter-btn" onclick="filterBy('Asylum', this)">Asylum</button>
+      <button class="filter-btn" onclick="filterBy('Naturalization', this)">Naturalization</button>
+      <input class="search-input" type="text" placeholder="Search by name or email..." oninput="searchRecords(this.value)" id="search-input">
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-title">Intake Reviews</span>
+        <span id="row-count" style="font-size:13px;color:var(--text-light);"></span>
+      </div>
+      <div id="table-container">
+        <div class="loading"><div class="spinner"></div><br>Loading case queue...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIORITY FLAGS TAB -->
+  <div class="tab-content" id="tab-priority">
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-title">🚨 Priority Cases — Immediate Review Required</span>
+        <span id="priority-count" style="font-size:13px;color:var(--red);font-weight:bold;"></span>
+      </div>
+      <div id="priority-container">
+        <div class="loading"><div class="spinner"></div><br>Loading priority cases...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTS TAB -->
+  <div class="tab-content" id="tab-clients">
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-title">Client Records</span>
+        <span id="clients-count" style="font-size:13px;color:var(--text-light);"></span>
+      </div>
+      <div id="clients-container">
+        <div class="loading"><div class="spinner"></div><br>Loading clients...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div class="tab-content" id="tab-analytics">
+    <div class="analytics-grid">
+      <div class="analytics-card">
+        <div class="analytics-title">Cases by Type</div>
+        <div id="chart-by-type"><div class="loading" style="padding:32px;">Loading...</div></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-title">Completeness Breakdown</div>
+        <div id="chart-by-completeness"><div class="loading" style="padding:32px;">Loading...</div></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-title">Client Status</div>
+        <div id="chart-by-client-status"><div class="loading" style="padding:32px;">Loading...</div></div>
+      </div>
+      <div class="analytics-card">
+        <div class="analytics-title">Priority Overview</div>
+        <div id="chart-priority"><div class="loading" style="padding:32px;">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-overlay" id="detail-overlay" onclick="closePanel()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div id="panel-content"></div>
+</div>
+
+<script>
+  const SUPABASE_URL = "__RAILWAY_URL__";
+  const SUPABASE_KEY = "__RAILWAY_KEY__";
+            
+  let allReviews = [];
+  let allClients = [];
+  let currentTab = 'queue';
+
+  const headers = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+
+  async function fetchJson(url) {
+    const res = await fetch(url, { headers });
+    return res.json();
+  }
+
+  async function loadAll() {
+    try {
+      const [reviews, clients] = await Promise.all([
+        fetchJson(`${SUPABASE_URL}/rest/v1/hvl_document_reviews?select=*,hvl_clients(full_name,email,phone,country_of_origin,status)&order=created_at.desc&limit=200`),
+        fetchJson(`${SUPABASE_URL}/rest/v1/hvl_clients?select=*&order=created_at.desc&limit=200`)
+      ]);
+
+      allReviews = Array.isArray(reviews) ? reviews : [];
+      allClients = Array.isArray(clients) ? clients : [];
+
+      updateStats();
+      renderQueue(allReviews);
+      renderPriority();
+      renderClients();
+      renderAnalytics();
+      document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function updateStats() {
+    document.getElementById('stat-total').textContent = allReviews.length;
+    document.getElementById('stat-complete').textContent = allReviews.filter(r => r.overall_completeness === 'complete').length;
+    document.getElementById('stat-priority').textContent = allReviews.filter(r => r.priority_flag).length;
+    document.getElementById('stat-clients').textContent = allClients.length;
+  }
+
+  function completenessLabel(val) {
+    const map = {
+      'complete': { cls: 'badge-complete', icon: '✅', text: 'Complete' },
+      'review_needed': { cls: 'badge-review', icon: '🟡', text: 'Review Needed' },
+      'incomplete': { cls: 'badge-incomplete', icon: '🔴', text: 'Incomplete' }
+    };
+    const m = map[val] || { cls: 'badge-incomplete', icon: '⚪', text: val || 'Unknown' };
+    return `<span class="badge ${m.cls}">${m.icon} ${m.text}</span>`;
+  }
+
+  function renderQueue(records) {
+    document.getElementById('row-count').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
+    if (!records.length) {
+      document.getElementById('table-container').innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div>No reviews found.</div>';
+      return;
+    }
+    const rows = records.map((r, i) => {
+      const client = r.hvl_clients || {};
+      const name = client.full_name || '—';
+      const email = client.email || '—';
+      const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '—';
+      const caseType = r.case_type || (r.hvl_cases?.case_type) || '—';
+      return `<tr onclick="openPanel(${i},'queue')" style="cursor:pointer;">
+        <td>
+          <div style="font-weight:bold;color:var(--navy);">${name}</div>
+          <div style="font-size:11px;color:var(--text-light);">${email}</div>
+        </td>
+        <td><span class="case-pill">${caseType}</span></td>
+        <td>${completenessLabel(r.overall_completeness)}</td>
+        <td>${r.priority_flag ? '<span class="badge badge-priority">🚨 Priority</span>' : '<span style="color:var(--text-light);font-size:12px;">—</span>'}</td>
+        <td><span style="font-size:12px;color:var(--text-light);">${r.status || '—'}</span></td>
+        <td style="color:var(--text-light);font-size:12px;">${date}</td>
+        <td style="color:var(--navy);font-size:18px;text-align:right;">›</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('table-container').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Client</th><th>Case Type</th><th>Completeness</th><th>Priority</th><th>Status</th><th>Date</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function renderPriority() {
+    const priority = allReviews.filter(r => r.priority_flag);
+    document.getElementById('priority-count').textContent = priority.length + ' case' + (priority.length !== 1 ? 's' : '') + ' flagged';
+    if (!priority.length) {
+      document.getElementById('priority-container').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div>No priority flags — all cases are under control.</div>';
+      return;
+    }
+    const rows = priority.map((r, i) => {
+      const client = r.hvl_clients || {};
+      const name = client.full_name || '—';
+      const email = client.email || '—';
+      const date = r.created_at ? new Date(r.created_at).toLocaleDateString() : '—';
+      const caseType = r.case_type || '—';
+      return `<tr onclick="openPriorityPanel(${i})" style="cursor:pointer;background:#fff8f8;">
+        <td>
+          <div style="font-weight:bold;color:var(--navy);">${name}</div>
+          <div style="font-size:11px;color:var(--text-light);">${email}</div>
+        </td>
+        <td><span class="case-pill">${caseType}</span></td>
+        <td>${completenessLabel(r.overall_completeness)}</td>
+        <td><span style="font-size:12px;color:var(--text-light);">${r.status || '—'}</span></td>
+        <td style="color:var(--text-light);font-size:12px;">${date}</td>
+        <td style="color:var(--navy);font-size:18px;text-align:right;">›</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('priority-container').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Client</th><th>Case Type</th><th>Completeness</th><th>Status</th><th>Date</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    window._priorityRecords = priority;
+  }
+
+  function renderClients() {
+    document.getElementById('clients-count').textContent = allClients.length + ' client' + (allClients.length !== 1 ? 's' : '');
+    if (!allClients.length) {
+      document.getElementById('clients-container').innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div>No clients found.</div>';
+      return;
+    }
+    const rows = allClients.map(c => {
+      const statusClass = c.status === 'Active' ? 'client-status-active' : 'client-status-inactive';
+      return `<tr>
+        <td>
+          <div style="font-weight:bold;color:var(--navy);">${c.full_name || '—'}</div>
+          <div style="font-size:11px;color:var(--text-light);">${c.email || '—'}</div>
+        </td>
+        <td style="font-size:13px;color:var(--text-light);">${c.phone || '—'}</td>
+        <td style="font-size:13px;color:var(--text-light);">${c.country_of_origin || '—'}</td>
+        <td style="font-size:13px;color:var(--text-light);">${c.preferred_language || '—'}</td>
+        <td><span class="${statusClass}">${c.status || '—'}</span></td>
+        <td style="font-size:12px;color:var(--text-light);">${c.created_at ? new Date(c.created_at).toLocaleDateString() : '—'}</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('clients-container').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Client</th><th>Phone</th><th>Country of Origin</th><th>Language</th><th>Status</th><th>Added</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  function renderAnalytics() {
+    const total = allReviews.length || 1;
+    const totalClients = allClients.length || 1;
+
+    // By case type
+    const byType = {};
+    allReviews.forEach(r => { const t = r.case_type || 'Unknown'; byType[t] = (byType[t]||0) + 1; });
+    document.getElementById('chart-by-type').innerHTML = Object.entries(byType).sort((a,b) => b[1]-a[1]).map(([k,v]) => `
+      <div class="bar-row">
+        <div class="bar-label">${k}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/total*100)}%;"></div></div>
+        <div class="bar-val">${v}</div>
+      </div>`).join('') || '<div style="color:var(--text-light);font-size:13px;">No data</div>';
+
+    // By completeness
+    const byComp = { complete: 0, review_needed: 0, incomplete: 0 };
+    allReviews.forEach(r => { if (byComp[r.overall_completeness] !== undefined) byComp[r.overall_completeness]++; });
+    const compLabels = { complete: '✅ Complete', review_needed: '🟡 Review Needed', incomplete: '🔴 Incomplete' };
+    const compColors = { complete: 'var(--green)', review_needed: 'var(--yellow)', incomplete: 'var(--red)' };
+    document.getElementById('chart-by-completeness').innerHTML = Object.entries(byComp).map(([k,v]) => `
+      <div class="bar-row">
+        <div class="bar-label">${compLabels[k]}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/total*100)}%;background:${compColors[k]};"></div></div>
+        <div class="bar-val">${v}</div>
+      </div>`).join('');
+
+    // Client status
+    const byStatus = {};
+    allClients.forEach(c => { const s = c.status || 'Unknown'; byStatus[s] = (byStatus[s]||0) + 1; });
+    document.getElementById('chart-by-client-status').innerHTML = Object.entries(byStatus).sort((a,b) => b[1]-a[1]).map(([k,v]) => `
+      <div class="bar-row">
+        <div class="bar-label">${k}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/totalClients*100)}%;"></div></div>
+        <div class="bar-val">${v}</div>
+      </div>`).join('') || '<div style="color:var(--text-light);font-size:13px;">No data</div>';
+
+    // Priority overview
+    const flagged = allReviews.filter(r => r.priority_flag).length;
+    const notFlagged = allReviews.length - flagged;
+    document.getElementById('chart-priority').innerHTML = `
+      <div class="bar-row">
+        <div class="bar-label">🚨 Priority</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(flagged/total*100)}%;background:var(--red);"></div></div>
+        <div class="bar-val">${flagged}</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">✅ Normal</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(notFlagged/total*100)}%;background:var(--green);"></div></div>
+        <div class="bar-val">${notFlagged}</div>
+      </div>
+      <div style="margin-top:20px;padding:16px;background:var(--cream);border-radius:8px;text-align:center;">
+        <div style="font-size:32px;font-weight:bold;color:var(--navy);font-family:Georgia,serif;">${allReviews.length}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">Total Reviews</div>
+      </div>
+      <div style="margin-top:12px;padding:16px;background:var(--cream);border-radius:8px;text-align:center;">
+        <div style="font-size:32px;font-weight:bold;color:var(--navy);font-family:Georgia,serif;">${allClients.length}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">Total Clients</div>
+      </div>`;
+  }
+
+  function filterBy(filter, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('search-input').value = '';
+    const filtered = filter === 'all' ? allReviews : allReviews.filter(r => r.case_type === filter);
+    renderQueue(filtered);
+  }
+
+  function searchRecords(q) {
+    q = q.toLowerCase();
+    const filtered = allReviews.filter(r => {
+      const client = r.hvl_clients || {};
+      return (client.full_name||'').toLowerCase().includes(q) || (client.email||'').toLowerCase().includes(q);
+    });
+    renderQueue(filtered);
+  }
+
+  function showTab(tab, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    el.classList.add('active');
+    currentTab = tab;
+    const titles = { queue: 'Document Review Queue', priority: 'Priority Flags', clients: 'Client Records', analytics: 'Analytics' };
+    document.getElementById('topbar-title').textContent = titles[tab];
+  }
+
+  function openPanel(idx, source) {
+    const r = source === 'priority' ? window._priorityRecords[idx] : allReviews[idx];
+    buildPanel(r);
+  }
+
+  function openPriorityPanel(idx) {
+    buildPanel(window._priorityRecords[idx]);
+  }
+
+  function buildPanel(r) {
+    const client = r.hvl_clients || {};
+    const docsReceived = Array.isArray(r.documents_present) ? r.documents_present : (typeof r.documents_received === 'object' ? Object.keys(r.documents_received) : []);
+    const docsMissing = Array.isArray(r.documents_missing) ? r.documents_missing : (typeof r.missing_items === 'object' ? Object.keys(r.missing_items) : []);
+
+    const presentHtml = docsReceived.map(d => `<div class="doc-item" style="color:var(--green);">✅ ${d}</div>`).join('') || '<div style="color:var(--text-light);font-size:13px;padding:8px 0;">None identified</div>';
+    const missingHtml = docsMissing.map(d => `<div class="doc-item" style="color:var(--red);">❌ ${d}</div>`).join('') || '<div style="color:var(--green);font-size:13px;padding:8px 0;">✅ No missing documents</div>';
+
+    document.getElementById('panel-content').innerHTML = `
+      ${r.priority_flag ? '<div class="priority-banner">🚨 PRIORITY — IMMEDIATE REVIEW REQUIRED</div>' : ''}
+      <div class="panel-header">
+        <div>
+          <div class="panel-name">${client.full_name || '—'}</div>
+          <div class="panel-meta">${client.email || ''} · <span class="case-pill">${r.case_type || '—'}</span></div>
+        </div>
+        <button class="panel-close" onclick="closePanel()">✕</button>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:24px;">
+        <div style="flex:1;padding:16px;background:var(--cream);border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Completeness</div>
+          ${completenessLabel(r.overall_completeness)}
+        </div>
+        <div style="flex:1;padding:16px;background:var(--cream);border-radius:8px;text-align:center;">
+          <div style="font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Status</div>
+          <span style="font-size:13px;font-weight:bold;color:var(--navy);">${r.status || '—'}</span>
+        </div>
+      </div>
+      ${r.notes || r.ai_summary ? `
+      <div class="panel-section">
+        <div class="panel-section-title">Notes / Summary</div>
+        <div class="summary-box">${r.notes || r.ai_summary || '—'}</div>
+      </div>` : ''}
+      <div class="panel-section">
+        <div class="panel-section-title">Documents Received (${docsReceived.length})</div>
+        ${presentHtml}
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Documents Missing (${docsMissing.length})</div>
+        ${missingHtml}
+      </div>
+      <div class="panel-section">
+        <div class="panel-section-title">Client Details</div>
+        <div style="font-size:13px;line-height:2;color:var(--text-light);">
+          📞 ${client.phone || 'No phone'}<br>
+          🌍 ${client.country_of_origin || 'Not specified'}<br>
+          🔔 Paralegal notified: ${r.paralegal_notified ? '✅' : '⏳ Pending'}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+        Created: ${r.created_at ? new Date(r.created_at).toLocaleString() : '—'} · ID: ${r.id?.slice(0,8)}...
+      </div>`;
+
+    document.getElementById('detail-overlay').classList.add('open');
+    document.getElementById('detail-panel').classList.add('open');
+  }
+
+  function closePanel() {
+    document.getElementById('detail-overlay').classList.remove('open');
+    document.getElementById('detail-panel').classList.remove('open');
+  }
+
+  loadAll();
+  setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

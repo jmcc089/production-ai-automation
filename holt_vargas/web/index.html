@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Holt & Vargas Immigration Law</title>
+  <style>
+    :root {
+      --navy: #1E3A5F;
+      --navy-dark: #162d4a;
+      --navy-light: #2a4f7e;
+      --gold: #C9A84C;
+      --gold-light: #e8c96a;
+      --cream: #f8f6f0;
+      --text: #1a1a1a;
+      --text-light: #5a5a5a;
+      --white: #ffffff;
+      --cyan: #06b6d4
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Georgia', serif; color: var(--text); background: var(--white); }
+
+    /* NAV */
+    nav {
+      background: var(--navy);
+      padding: 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .logo { display: flex; flex-direction: column; }
+    .logo img {
+      max-height: 30px;
+      width: auto;
+    }
+    .logo-name { color: var(--gold); font-size: 20px; font-weight: bold; letter-spacing: 2px; }
+    .logo-sub { color: rgba(255,255,255,0.6); font-size: 10px; letter-spacing: 3px; text-transform: uppercase; font-family: Arial, sans-serif; }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; font-family: Arial, sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta {
+      background: var(--gold);
+      color: var(--navy);
+      padding: 10px 24px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: var(--gold-light); }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 50%, var(--navy-light) 100%);
+      padding: 120px 48px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.4);
+      color: var(--gold);
+      padding: 6px 20px;
+      border-radius: 100px;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero h1 { color: var(--white); font-size: 52px; line-height: 1.2; margin-bottom: 24px; }
+    .hero h1 span { color: var(--gold); }
+    .hero p { color: rgba(255,255,255,0.75); font-size: 18px; line-height: 1.8; margin-bottom: 48px; max-width: 600px; margin-left: auto; margin-right: auto; }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--gold);
+      color: var(--navy);
+      padding: 16px 36px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--white);
+      padding: 16px 36px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.4);
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* STATS BAR */
+    .stats-bar { background: var(--gold); padding: 32px 48px; }
+    .stats-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; text-align: center; }
+    .stat-number { font-size: 36px; font-weight: bold; color: var(--navy); }
+    .stat-label { font-family: Arial, sans-serif; font-size: 13px; color: var(--navy-dark); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* SECTION */
+    section { padding: 96px 48px; }
+    .section-label { font-family: Arial, sans-serif; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
+    .section-title { font-size: 38px; color: var(--navy); margin-bottom: 20px; line-height: 1.2; }
+    .section-subtitle { font-size: 17px; color: var(--text-light); line-height: 1.8; max-width: 560px; }
+    .section-divider { width: 48px; height: 3px; background: var(--gold); margin: 20px 0 40px; }
+
+    /* PRACTICE AREAS */
+    #practice { background: var(--cream); }
+    .practice-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(2,1fr); gap: 32px; }
+    .practice-card {
+      background: var(--white);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e8e3d8;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .practice-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(30,58,95,0.12); }
+    .card-header { background: var(--navy); padding: 24px 28px; display: flex; align-items: center; gap: 16px; }
+    .card-icon { width: 48px; height: 48px; background: rgba(201,168,76,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .card-title { color: var(--gold); font-size: 20px; font-weight: bold; }
+    .card-body { padding: 28px; }
+    .card-body p { color: var(--text-light); line-height: 1.7; margin-bottom: 16px; }
+    .doc-list { list-style: none; }
+    .doc-list li { font-family: Arial, sans-serif; font-size: 13px; color: var(--text-light); padding: 6px 0; border-bottom: 1px solid #f0ede6; display: flex; align-items: center; gap: 8px; }
+    .doc-list li::before { content: '›'; color: var(--gold); font-size: 18px; }
+
+    /* TEAM */
+    #team { background: var(--white); }
+    .team-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(3,1fr); gap: 32px; }
+    .team-card { text-align: center; }
+    .team-avatar {
+      width: 100px; height: 100px;
+      background: var(--navy);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; color: var(--gold);
+      font-weight: bold;
+      border: 3px solid var(--gold);
+    }
+    .team-name { font-size: 20px; color: var(--navy); margin-bottom: 4px; }
+    .team-role { font-family: Arial, sans-serif; font-size: 13px; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+    .team-bio { font-family: Arial, sans-serif; font-size: 14px; color: var(--text-light); line-height: 1.7; }
+
+    /* CONTACT / TALLY FORM */
+    #contact { background: var(--navy); }
+    #contact .section-label { color: var(--gold-light); }
+    #contact .section-title { color: var(--white); }
+    #contact .section-subtitle { color: rgba(255,255,255,0.7); }
+    .contact-grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 64px; align-items: start; }
+    .contact-info { color: rgba(255,255,255,0.85); }
+    .contact-detail { display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-start; }
+    .contact-icon { width: 44px; height: 44px; background: rgba(201,168,76,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .contact-text strong { display: block; color: var(--gold); font-family: Arial, sans-serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+    .contact-text span { font-size: 15px; }
+    .tally-container {
+  background: #ffffff;
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 8px;
+  padding: 32px;
+}
+    .tally-container h3 { color: var(--navy); margin-bottom: 8px; font-size: 22px; }
+.tally-container p { color: #444444; font-family: Arial, sans-serif; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .tally-placeholder {
+      background: rgba(255,255,255,0.03);
+      border: 2px dashed rgba(201,168,76,0.3);
+      border-radius: 6px;
+      padding: 48px 24px;
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    /* FOOTER */
+    footer { background: var(--navy-dark); padding: 40px 48px; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .footer-logo { color: rgba(255, 255, 255, 0.4); font-size: 12px; letter-spacing: 2px; }
+    .footer-note { font-family: Arial, sans-serif; font-size: 12px; color: rgba(255,255,255,0.4); text-align: right; line-height: 1.6; }
+    .footer-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 11px;
+                color: rgba(255, 255, 255, 0.4);
+            }
+    .footer-badge span {
+                color: var(--cyan);
+                font-weight: 500;
+            }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .practice-grid, .team-grid, .contact-grid, .stats-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      section { padding: 64px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="logo">
+  <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png" alt="Holt & Vargas Logo" style="max-height: 30px; width: auto;">
+</div>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#practice">Practice Areas</a></li>
+      <li><a href="#team">Our Team</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta">Free Consultation</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">Trusted Immigration Counsel</div>
+      <h1>Your Path to the<br><span>American Dream</span><br>Starts Here</h1>
+      <p>Holt & Vargas provides experienced, compassionate immigration law services. From family visas to asylum cases, we guide every client through the complexities of U.S. immigration law.</p>
+      <div class="hero-buttons">
+        <a href="#contact" class="btn-primary">Start Your Case</a>
+        <a href="#practice" class="btn-secondary">Our Services</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stats-grid">
+      <div><div class="stat-number">2,400+</div><div class="stat-label">Cases Handled</div></div>
+      <div><div class="stat-number">18</div><div class="stat-label">Years Experience</div></div>
+      <div><div class="stat-number">94%</div><div class="stat-label">Approval Rate</div></div>
+      <div><div class="stat-number">4</div><div class="stat-label">Practice Areas</div></div>
+    </div>
+  </div>
+
+  <!-- PRACTICE AREAS -->
+  <section id="practice">
+    <div style="max-width:1100px;margin:0 auto;">
+      <p class="section-label">What We Do</p>
+      <h2 class="section-title">Our Practice Areas</h2>
+      <div class="section-divider"></div>
+      <div class="practice-grid">
+
+        <div class="practice-card">
+          <div class="card-header">
+            <div class="card-icon">👨‍👩‍👧</div>
+            <div class="card-title">Family Visa</div>
+          </div>
+          <div class="card-body">
+            <p>Reunite with your loved ones. We handle immediate relative petitions, family preference categories, and consular processing for spouses, children, and parents of U.S. citizens and permanent residents.</p>
+            <ul class="doc-list">
+              <li>I-130 Petition for Alien Relative</li>
+              <li>I-864 Affidavit of Support</li>
+              <li>DS-260 Immigrant Visa Application</li>
+              <li>Medical Exam (I-693)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="practice-card">
+          <div class="card-header">
+            <div class="card-icon">💼</div>
+            <div class="card-title">EB Green Card</div>
+          </div>
+          <div class="card-body">
+            <p>Employment-based permanent residency for professionals, executives, and skilled workers. We guide you through the I-140 petition, priority date strategy, and I-485 adjustment of status.</p>
+            <ul class="doc-list">
+              <li>I-140 Immigrant Petition</li>
+              <li>I-485 Adjustment of Status</li>
+              <li>PERM Labor Certification</li>
+              <li>Educational Credential Evaluation</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="practice-card">
+          <div class="card-header">
+            <div class="card-icon">🛡️</div>
+            <div class="card-title">Asylum</div>
+          </div>
+          <div class="card-body">
+            <p>Protection for those fleeing persecution. We represent asylum seekers in affirmative and defensive proceedings, building comprehensive cases that document the fear and risk you face in your home country.</p>
+            <ul class="doc-list">
+              <li>I-589 Application for Asylum</li>
+              <li>Personal Statement Preparation</li>
+              <li>Country Condition Evidence</li>
+              <li>USCIS & Immigration Court Representation</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="practice-card">
+          <div class="card-header">
+            <div class="card-icon">🇺🇸</div>
+            <div class="card-title">Naturalization</div>
+          </div>
+          <div class="card-body">
+            <p>Become a U.S. citizen. We prepare and file your N-400 application, ensure your eligibility requirements are met, and prepare you thoroughly for the civics interview and test.</p>
+            <ul class="doc-list">
+              <li>N-400 Application for Naturalization</li>
+              <li>Eligibility Assessment</li>
+              <li>Interview Preparation</li>
+              <li>Oath Ceremony Coordination</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TEAM -->
+  <section id="team">
+    <div style="max-width:1100px;margin:0 auto;text-align:center;">
+      <p class="section-label">Our People</p>
+      <h2 class="section-title">Meet the Team</h2>
+      <div class="section-divider" style="margin-left:auto;margin-right:auto;"></div>
+      <div class="team-grid" style="margin-top:48px;">
+        <div class="team-card">
+          <div class="team-avatar">RH</div>
+          <h3 class="team-name">Robert Holt</h3>
+          <p class="team-role">Managing Partner</p>
+          <p class="team-bio">18 years specializing in employment-based immigration and naturalization. Former USCIS adjudicator, member of AILA.</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">MV</div>
+          <h3 class="team-name">Maria Vargas</h3>
+          <p class="team-role">Partner</p>
+          <p class="team-bio">Asylum and humanitarian law specialist. Fluent in Spanish and Portuguese. Recognized by Super Lawyers for immigration advocacy.</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar">MC</div>
+          <h3 class="team-name">M. Cruz Cardoza</h3>
+          <p class="team-role">Senior Paralegal</p>
+          <p class="team-bio">Document intake and case preparation specialist across all four practice areas. Coordinates directly with clients throughout the process.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT + TALLY -->
+  <section id="contact">
+    <div class="contact-grid">
+      <div>
+        <p class="section-label">Get in Touch</p>
+        <h2 class="section-title">Start Your Free Consultation</h2>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">Submit your information and documents below. Our team will review your case and contact you within one business day.</p>
+        <br><br>
+        <div class="contact-info">
+          <div class="contact-detail">
+            <div class="contact-icon">📍</div>
+            <div class="contact-text">
+              <strong>Address</strong>
+              <span>350 Fifth Avenue, Suite 4100<br>New York, NY 10118</span>
+            </div>
+          </div>
+          <div class="contact-detail">
+            <div class="contact-icon">📞</div>
+            <div class="contact-text">
+              <strong>Phone</strong>
+              <span>(212) 555-0190</span>
+            </div>
+          </div>
+          <div class="contact-detail">
+            <div class="contact-icon">✉️</div>
+            <div class="contact-text">
+              <strong>Email</strong>
+              <span>intake@holtvargas.law</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<div class="tally-container">
+  <h3>Document Intake Form</h3>
+  <p>Tell us about your case and the documents you currently have. Our AI-assisted review system will assess completeness and a paralegal will follow up with next steps.</p>
+ <iframe data-tally-src="https://tally.so/embed/xXvdYv?alignLeft=1&hideTitle=1&transparentBackground=0&dynamicHeight=1&theme=light" loading="lazy" width="100%" height="400" frameborder="0" marginheight="0" marginwidth="0" title="H&V Document Intake"></iframe>
+  <script async src="https://tally.so/widgets/embed.js"></script>
+</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">© 2026 Holtz & Vargas Immigration Law · All Rights Reserved</div>
+      <div class="footer-note">
+        <div class="footer-badge">
+                        Built with
+                        <span>· Railway · n8n · Supabase · Tally</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
