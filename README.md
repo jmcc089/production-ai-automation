@@ -1,6 +1,6 @@
 # Production AI Automation — Three builds, one method
 
-Frontends for three AI intake-automation builds, each in a different industry, all sharing one method and one platform.
+Frontends and automation backbone for three AI intake-automation builds, each in a different industry, all sharing one method and one platform.
 
 The same automation pattern — unstructured message in, structured triage out — applied where "wrong" means something different each time: a clinic, an immigration law firm, and a cookware retailer. The design decisions diverge even though the pattern holds. The clearest tell is grounding: Cedar classifies with no retrieval, Holt & Vargas grounds on in-prompt checklists, Brasa uses true retrieval over a Postgres FTS catalog.
 
@@ -20,12 +20,13 @@ Each leaf is a self-contained deployable unit — its own `index.html`, `package
 | `holt_vargas/app` | holtvargas-app | https://holtvargas-app.up.railway.app |
 | `brasa_commerce/web` | brasacommerce-web | https://brasacommerce-web.up.railway.app |
 | `brasa_commerce/app` | brasacommerce-app | https://brasacommerce-app.up.railway.app |
+| `n8n` | n8n | https://n8n-production-3503.up.railway.app |
 
-`web` = public marketing site with the embedded Tally intake form. `app` = the internal operator dashboard.
+`web` = public marketing site with the embedded Tally intake form. `app` = the internal operator dashboard. `n8n` = the shared automation backbone all three builds run on — see [n8n/README.md](n8n/README.md).
 
 ## Architecture
 
-These repos are the frontend layer only. The automation lives in n8n; the data lives in Supabase.
+The frontends are static sites; the automation lives in n8n; the data lives in Supabase. `n8n/` in this repo is only the container build source (a Dockerfile pulling the official image) — workflows, credentials, and execution history live in the attached Postgres and volume, not in git.
 
 ```
 Tally form (embedded in web/)
