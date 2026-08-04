@@ -6,6 +6,7 @@
 <title>Brasa Commerce — Support Desk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --terra: #C2522A;
@@ -220,22 +221,64 @@
   /* ── SCROLLBARS ── */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* ── LOGIN ── */
+  .login { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--cream); z-index: 999; padding: 24px; }
+  .login-card { width: 100%; max-width: 370px; background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 34px 30px; box-shadow: 0 6px 28px rgba(44,44,44,0.07); }
+  .login-logo { display: block; height: 34px; margin: 0 auto 22px; }
+  .login-title { font-family: 'Fraunces', Georgia, serif; font-size: 21px; color: var(--charcoal); text-align: center; margin-bottom: 5px; }
+  .login-sub { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 24px; }
+  .login-field { margin-bottom: 13px; }
+  .login-field label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); margin-bottom: 6px; }
+  .login-field input { width: 100%; font-family: 'Archivo', sans-serif; font-size: 14px; color: var(--charcoal); background: #FAFAFA; border: 1px solid var(--border); border-radius: 7px; padding: 10px 12px; outline: none; transition: border-color 0.2s; }
+  .login-field input:focus { border-color: var(--terra); }
+  .login-btn { width: 100%; margin-top: 8px; font-family: 'Archivo', sans-serif; font-size: 14px; font-weight: 600; color: var(--white); background: var(--terra); border: none; border-radius: 8px; padding: 11px; cursor: pointer; transition: background 0.2s; }
+  .login-btn:hover { background: #A03F1E; }
+  .login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .login-error { display: none; margin-top: 13px; font-size: 13px; color: #DC2626; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 7px; padding: 10px 12px; line-height: 1.5; }
+  .login-foot { margin-top: 20px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.6; }
+
+  /* ── TOPNAV USER ── */
+  .topnav-user { font-size: 12px; color: #D1D5DB; }
+  .topnav-user strong { color: var(--white); font-weight: 600; }
 </style>
 </head>
 <body>
 
+<!-- LOGIN GATE -->
+<div class="login" id="login" style="display:none">
+  <form class="login-card" id="loginForm">
+    <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo.svg" alt="Brasa Commerce" class="login-logo" onerror="this.style.display='none'">
+    <div class="login-title">Support Desk</div>
+    <div class="login-sub">Sign in with your agent account</div>
+    <div class="login-field">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" autocomplete="username" required>
+    </div>
+    <div class="login-field">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="login-btn" id="loginBtn">Sign in</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-foot">Brasa Commerce · Chicago, IL<br>Internal use only</div>
+  </form>
+</div>
+
 <!-- TOP NAV -->
-<div class="topnav">
+<div class="topnav" id="topnav" style="display:none">
   <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo-w.webp" alt="Brasa" class="topnav-logo">
   <span class="topnav-title"><span>Support Desk</span> · Agent View</span>
   <div class="topnav-right">
     <span class="badge-count" id="esc-count" style="display:none"></span>
+    <span class="topnav-user">Signed in as <strong id="agentName"></strong></span>
     <button class="refresh-btn" onclick="loadTickets()">↻ Refresh</button>
+    <button class="refresh-btn" onclick="signOut()">Sign out</button>
   </div>
 </div>
 
 <!-- LAYOUT -->
-<div class="layout">
+<div class="layout" id="layout" style="display:none">
 
   <!-- SIDEBAR -->
   <div class="sidebar">
@@ -299,20 +342,29 @@
 const SUPABASE_URL = "__SUPABASE_URL__";
 const SUPABASE_KEY = "__SUPABASE_KEY__";
 const APPROVE_WEBHOOK = 'https://n8n-production-3503.up.railway.app/webhook/brasa-approve';
+
+// supabase-js is used for authentication only — session persistence and silent
+// token refresh. The data calls below stay as plain fetch against PostgREST.
+const sbAuth = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let tickets       = [];
 let customers     = {};
 let selectedId    = null;
 let editedReply   = '';
 let filters       = { status: 'draft', intent: 'all' };
+let accessToken   = null;   // current JWT, refreshed via onAuthStateChange
+let currentAgent  = null;
 
 // ── SUPABASE HELPER ───────────────────────────────────────────────────────────
 async function sb(path, options = {}) {
+  // apikey identifies the project; Authorization carries the signed-in user's
+  // JWT, which is what the RLS policies read. Without it every query returns [].
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
     headers: {
       apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+      Authorization: `Bearer ${accessToken || SUPABASE_KEY}`,
       'Content-Type': 'application/json',
       Prefer: options.prefer || 'return=representation',
       ...options.headers
@@ -569,7 +621,7 @@ async function addNote(ticketId) {
     await sb('bc_ticket_notes', {
       method: 'POST',
       prefer: 'return=minimal',
-      body: JSON.stringify({ ticket_id: ticketId, note, note_type: 'Internal' })
+      body: JSON.stringify({ ticket_id: ticketId, agent_id: currentAgent?.id || null, note, note_type: 'Internal' })
     });
     input.value = '';
     showToast('Note added', 'success');
@@ -607,9 +659,82 @@ function showToast(msg, type = 'success') {
   toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3500);
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-loadTickets();
-setInterval(loadTickets, 30000); // auto-refresh every 30s
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+let pendingLoginError = '';
+let refreshTimer = null;
+
+function showLogin(message) {
+  document.getElementById('topnav').style.display = 'none';
+  document.getElementById('layout').style.display = 'none';
+  document.getElementById('login').style.display  = 'flex';
+  const err = document.getElementById('loginError');
+  err.textContent = message || '';
+  err.style.display = message ? 'block' : 'none';
+}
+
+function showApp() {
+  document.getElementById('login').style.display  = 'none';
+  document.getElementById('topnav').style.display = 'flex';
+  document.getElementById('layout').style.display = 'flex';
+  document.getElementById('agentName').textContent = currentAgent.full_name;
+  if (!refreshTimer) refreshTimer = setInterval(loadTickets, 30000);
+  loadTickets();
+}
+
+// Maps the Auth identity onto the agent row. Note this call already needs a
+// valid JWT — bc_agent is readable by authenticated users only.
+async function loadAgent() {
+  const { data: { user } } = await sbAuth.auth.getUser();
+  if (!user) return null;
+  const rows = await sb(`bc_agent?auth_user_id=eq.${user.id}&select=id,full_name,role&limit=1`);
+  return (rows && rows[0]) || null;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  const { error } = await sbAuth.auth.signInWithPassword({
+    email: document.getElementById('loginEmail').value.trim(),
+    password: document.getElementById('loginPassword').value
+  });
+  btn.disabled = false;
+  btn.textContent = 'Sign in';
+  if (error) showLogin(error.message);
+  // On success onAuthStateChange takes over from here.
+});
+
+async function signOut() {
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  await sbAuth.auth.signOut();
+}
+
+// Fires on page load, sign-in, sign-out and every silent token refresh. Keeping
+// accessToken in sync here is what makes the fetch helper stay authenticated.
+sbAuth.auth.onAuthStateChange(async (_event, session) => {
+  accessToken = session?.access_token || null;
+  if (session) {
+    try {
+      currentAgent = await loadAgent();
+    } catch (err) {
+      currentAgent = null;
+    }
+    if (!currentAgent) {
+      pendingLoginError = 'This account is not linked to a support agent profile.';
+      await sbAuth.auth.signOut();
+      return;
+    }
+    document.getElementById('loginPassword').value = '';
+    showApp();
+  } else {
+    currentAgent = null;
+    tickets = []; customers = {}; selectedId = null;
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    showLogin(pendingLoginError);
+    pendingLoginError = '';
+  }
+});
 </script>
 </body>
 </html>
