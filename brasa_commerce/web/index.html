@@ -17,6 +17,7 @@
     --white: #FFFFFF;
     --text: #2C2C2C;
     --muted: #8C7B70;
+    --green: #3E7C59;
     --display: 'Fraunces', Georgia, serif;
     --body: 'Archivo', sans-serif;
   }
@@ -32,6 +33,8 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
+
+  [hidden] { display: none !important; }
 
   /* ─── NAV ─── */
   header {
@@ -64,6 +67,7 @@
     font-size: 14px;
     letter-spacing: 0.3px;
     transition: color 0.2s;
+    cursor: pointer;
   }
   nav a:hover { color: var(--terra); }
   .nav-cta {
@@ -75,6 +79,35 @@
   }
   .nav-cta:hover { background: var(--terra-dark); color: var(--white) !important; }
   .hamburger { display: none; background: none; border: none; cursor: pointer; font-size: 24px; color: var(--charcoal); }
+
+  .cart-btn {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--body);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--charcoal);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0;
+  }
+  .cart-btn:hover { color: var(--terra); }
+  .cart-count {
+    background: var(--terra);
+    color: var(--white);
+    border-radius: 100px;
+    min-width: 20px;
+    height: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+  }
 
   /* ─── HERO ─── */
   .hero {
@@ -125,8 +158,12 @@
     font-size: 15px;
     transition: transform 0.2s, background 0.2s;
     display: inline-block;
+    border: none;
+    cursor: pointer;
+    font-family: var(--body);
   }
   .btn-primary:hover { background: var(--terra-dark); transform: translateY(-2px); }
+  .btn-primary:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
   .btn-ghost {
     color: var(--charcoal);
     text-decoration: none;
@@ -135,6 +172,7 @@
     border-bottom: 2px solid var(--charcoal);
     padding-bottom: 2px;
     transition: color 0.2s, border-color 0.2s;
+    cursor: pointer;
   }
   .btn-ghost:hover { color: var(--terra); border-color: var(--terra); }
 
@@ -207,18 +245,20 @@
     overflow: hidden;
     transition: transform 0.25s, box-shadow 0.25s;
     border: 1px solid var(--cream-deep);
+    display: flex;
+    flex-direction: column;
   }
   .product:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(44,44,44,0.12); }
   .product-img { aspect-ratio: 1; overflow: hidden; background: var(--cream-deep); }
   .product-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
   .product:hover .product-img img { transform: scale(1.05); }
-  .product-body { padding: 22px 24px 26px; }
+  .product-body { padding: 22px 24px 26px; display: flex; flex-direction: column; flex: 1; }
   .product-cat {
     font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
     text-transform: uppercase; color: var(--terra); margin-bottom: 8px;
   }
   .product h3 { font-family: var(--display); font-size: 22px; font-weight: 500; color: var(--charcoal); margin-bottom: 8px; }
-  .product p { font-size: 14px; color: var(--muted); margin-bottom: 18px; min-height: 40px; }
+  .product p { font-size: 14px; color: var(--muted); margin-bottom: 18px; flex: 1; }
   .product-foot { display: flex; align-items: center; justify-content: space-between; }
   .price { font-family: var(--display); font-size: 24px; font-weight: 600; color: var(--charcoal); }
   .add-btn {
@@ -227,6 +267,15 @@
     font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s;
   }
   .add-btn:hover { background: var(--terra); }
+  .add-btn.added { background: var(--green); }
+
+  .catalog-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-size: 15px;
+  }
 
   /* ─── STORY ─── */
   .story { background: var(--cream-deep); }
@@ -262,6 +311,160 @@
   }
   .tally-wrap iframe { width: 100%; border: none; border-radius: 12px; display: block; }
 
+  /* ─── CART DRAWER ─── */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(44,44,44,0.5);
+    z-index: 200; backdrop-filter: blur(2px);
+  }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw;
+    background: var(--cream); z-index: 210; display: flex; flex-direction: column;
+    box-shadow: -12px 0 40px rgba(44,44,44,0.18);
+  }
+  .drawer-head {
+    padding: 22px 26px; border-bottom: 1px solid var(--cream-deep);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .drawer-head h3 { font-family: var(--display); font-size: 24px; font-weight: 500; }
+  .icon-btn {
+    background: none; border: none; font-size: 24px; cursor: pointer;
+    color: var(--muted); line-height: 1; padding: 4px 8px;
+  }
+  .icon-btn:hover { color: var(--charcoal); }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 22px 26px; }
+  .drawer-foot { padding: 22px 26px; border-top: 1px solid var(--cream-deep); background: var(--white); }
+
+  .cart-line { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--cream-deep); }
+  .cart-line img { width: 68px; height: 68px; object-fit: cover; border-radius: 10px; background: var(--cream-deep); }
+  .cart-line-info { flex: 1; min-width: 0; }
+  .cart-line-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .cart-line-info .sku { font-size: 11px; color: var(--muted); letter-spacing: 0.5px; }
+  .qty-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .qty-btn {
+    width: 26px; height: 26px; border-radius: 100px; border: 1px solid var(--cream-deep);
+    background: var(--white); cursor: pointer; font-size: 15px; line-height: 1; color: var(--charcoal);
+  }
+  .qty-btn:hover { border-color: var(--terra); color: var(--terra); }
+  .qty-row span { font-size: 14px; font-weight: 600; min-width: 18px; text-align: center; }
+  .cart-line-price { font-family: var(--display); font-size: 17px; font-weight: 600; white-space: nowrap; }
+
+  .totals-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+  .totals-row.grand {
+    font-family: var(--display); font-size: 22px; color: var(--charcoal);
+    border-top: 2px solid var(--charcoal); padding-top: 12px; margin: 14px 0 18px;
+  }
+  .ship-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+  .empty-cart { text-align: center; color: var(--muted); padding: 50px 0; }
+
+  /* ─── FORMS / MODAL ─── */
+  .modal {
+    position: fixed; inset: 0; z-index: 210; display: flex;
+    align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto;
+  }
+  .modal-card {
+    background: var(--cream); border-radius: 18px; width: 100%; max-width: 560px;
+    box-shadow: 0 24px 60px rgba(44,44,44,0.25); overflow: hidden;
+  }
+  .modal-head {
+    padding: 24px 30px; border-bottom: 1px solid var(--cream-deep);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-head h3 { font-family: var(--display); font-size: 26px; font-weight: 500; }
+  .modal-body { padding: 26px 30px 30px; }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block; font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  }
+  .field input, .field textarea {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--cream-deep);
+    border-radius: 10px; font-family: var(--body); font-size: 15px;
+    background: var(--white); color: var(--text);
+  }
+  .field input:focus, .field textarea:focus { outline: 2px solid var(--terra); outline-offset: -1px; }
+  .field-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+  .form-error {
+    background: #FBEAE5; border: 1px solid #E4A794; color: #8E2F12;
+    padding: 12px 14px; border-radius: 10px; font-size: 14px; margin-bottom: 16px;
+  }
+
+  /* ─── TRACK ─── */
+  .track-wrap { max-width: 720px; margin: 0 auto; padding: 70px 32px 90px; }
+  .track-search { display: flex; gap: 12px; margin-bottom: 12px; }
+  .track-search input {
+    flex: 1; padding: 15px 18px; border: 1px solid var(--cream-deep); border-radius: 100px;
+    font-family: var(--body); font-size: 16px; letter-spacing: 1px; background: var(--white);
+    text-transform: uppercase;
+  }
+  .track-search input:focus { outline: 2px solid var(--terra); outline-offset: -1px; }
+
+  .order-card {
+    background: var(--white); border: 1px solid var(--cream-deep);
+    border-radius: 18px; overflow: hidden; margin-top: 30px;
+  }
+  .order-head {
+    background: var(--charcoal); color: var(--cream); padding: 26px 30px;
+    display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;
+  }
+  .order-head .num { font-family: var(--display); font-size: 30px; color: var(--white); line-height: 1.1; }
+  .order-head .date { font-size: 13px; color: rgba(245,240,234,0.65); }
+  .order-head .eta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(245,240,234,0.65); }
+  .order-head .eta { font-family: var(--display); font-size: 20px; color: var(--terra); }
+
+  .progress { padding: 34px 30px 10px; }
+  .steps { display: flex; }
+  .step { flex: 1; text-align: center; position: relative; }
+  .step .dot {
+    width: 16px; height: 16px; border-radius: 100px; background: var(--cream-deep);
+    margin: 0 auto 10px; position: relative; z-index: 2; border: 3px solid var(--white);
+    box-shadow: 0 0 0 1px var(--cream-deep);
+  }
+  .step.done .dot { background: var(--terra); box-shadow: 0 0 0 1px var(--terra); }
+  .step.current .dot { background: var(--terra); box-shadow: 0 0 0 4px rgba(194,82,42,0.22); }
+  .step .bar {
+    position: absolute; top: 8px; left: -50%; width: 100%; height: 2px;
+    background: var(--cream-deep); z-index: 1;
+  }
+  .step.done .bar, .step.current .bar { background: var(--terra); }
+  .step:first-child .bar { display: none; }
+  .step .label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  .step.done .label, .step.current .label { color: var(--charcoal); }
+
+  .order-section { padding: 24px 30px; border-top: 1px solid var(--cream-deep); }
+  .order-section h4 {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px;
+  }
+  .order-item { display: flex; justify-content: space-between; padding: 9px 0; font-size: 14px; }
+  .order-item .sku { font-size: 11px; color: var(--muted); }
+  .carrier-grid { display: flex; gap: 40px; flex-wrap: wrap; }
+  .carrier-grid div span { display: block; font-size: 12px; color: var(--muted); }
+  .carrier-grid div strong { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+
+  .track-note {
+    background: var(--cream-deep); border-radius: 12px; padding: 16px 18px;
+    font-size: 13px; color: var(--muted); margin-top: 24px;
+  }
+  .not-found {
+    background: var(--white); border: 1px solid var(--cream-deep); border-radius: 18px;
+    padding: 40px 30px; text-align: center; margin-top: 30px;
+  }
+  .not-found h3 { font-family: var(--display); font-size: 24px; margin-bottom: 10px; }
+  .not-found p { color: var(--muted); font-size: 15px; }
+
+  .confirm-box { text-align: center; padding: 10px 0 6px; }
+  .confirm-box .check {
+    width: 62px; height: 62px; border-radius: 100px; background: var(--green);
+    color: var(--white); font-size: 32px; display: flex; align-items: center;
+    justify-content: center; margin: 0 auto 20px;
+  }
+  .confirm-box .num {
+    font-family: var(--display); font-size: 34px; color: var(--charcoal);
+    letter-spacing: 1px; margin: 6px 0 14px;
+  }
+  .confirm-box p { color: var(--muted); font-size: 15px; margin-bottom: 8px; }
+
   /* ─── FOOTER ─── */
   footer { background: var(--cream); border-top: 1px solid var(--cream-deep); }
   .footer-inner {
@@ -272,7 +475,7 @@
   .footer-brand p { color: var(--muted); font-size: 14px; max-width: 280px; }
   .footer-cols { display: flex; gap: 64px; flex-wrap: wrap; }
   .footer-col h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--charcoal); margin-bottom: 14px; }
-  .footer-col a { display: block; color: var(--muted); text-decoration: none; font-size: 14px; margin-bottom: 9px; transition: color 0.2s; }
+  .footer-col a { display: block; color: var(--muted); text-decoration: none; font-size: 14px; margin-bottom: 9px; transition: color 0.2s; cursor: pointer; }
   .footer-col a:hover { color: var(--terra); }
   .footer-bottom {
     max-width: 1200px; margin: 0 auto; padding: 22px 32px;
@@ -293,8 +496,12 @@
     nav ul { display: none; }
     .hamburger { display: block; }
     .products { grid-template-columns: 1fr; }
-    .nav-inner { padding: 14px 20px; }
+    .nav-inner { padding: 14px 20px; gap: 12px; }
     .section { padding: 56px 20px; }
+    .field-row { grid-template-columns: 1fr; }
+    .track-wrap { padding: 46px 20px 70px; }
+    .step .label { font-size: 10px; }
+    .order-head .num { font-size: 24px; }
   }
 </style>
 </head>
@@ -303,173 +510,117 @@
   <!-- NAV -->
   <header>
     <div class="nav-inner">
-      <a href="#" class="logo">
+      <a href="#" class="logo" onclick="Brasa.goShop()">
         <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo.svg" alt="Brasa Commerce">
       </a>
       <nav>
         <ul>
-          <li><a href="#shop">Shop</a></li>
-          <li><a href="#story">Our Story</a></li>
-          <li><a href="#support" class="nav-cta">Get Help</a></li>
+          <li><a onclick="Brasa.goShop('shop')">Shop</a></li>
+          <li><a onclick="Brasa.goShop('story')">Our Story</a></li>
+          <li><a href="#track">Track Order</a></li>
+          <li><a onclick="Brasa.goShop('support')" class="nav-cta">Get Help</a></li>
         </ul>
       </nav>
+      <button class="cart-btn" onclick="Brasa.openCart()" aria-label="Open cart">
+        Cart <span class="cart-count" id="cart-count">0</span>
+      </button>
       <button class="hamburger" onclick="document.querySelector('nav ul').style.display = document.querySelector('nav ul').style.display === 'flex' ? 'none' : 'flex'">☰</button>
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-text">
-      <span class="hero-eyebrow">Premium Cookware · Made for Cooks</span>
-      <h1>Tools that <em>outlast</em> the trends.</h1>
-      <p>Hand-finished cast iron, carbon steel, and enameled ceramic — built in the tradition of cookware that gets passed down, not thrown out.</p>
-      <div class="hero-actions">
-        <a href="#shop" class="btn-primary">Explore the Collection</a>
-        <a href="#story" class="btn-ghost">Our craft</a>
-      </div>
-    </div>
-    <div class="hero-visual">
-      <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=900&q=80" alt="Cast iron skillet on a stovetop">
-      <div class="hero-badge">
-        <strong>Seasoned by hand</strong>
-        <span>Three-layer flaxseed cure</span>
-      </div>
-    </div>
-  </section>
+  <!-- ══════════ SHOP VIEW ══════════ -->
+  <div id="view-shop">
 
-  <!-- TRUST BAR -->
-  <div class="trust">
-    <div class="trust-inner">
-      <div class="trust-item"><strong>Free</strong><span>Shipping over $75</span></div>
-      <div class="trust-item"><strong>30 Day</strong><span>Returns, no questions</span></div>
-      <div class="trust-item"><strong>Lifetime</strong><span>Cast iron warranty</span></div>
-      <div class="trust-item"><strong>USA</strong><span>Ships continental US</span></div>
+    <section class="hero">
+      <div class="hero-text">
+        <span class="hero-eyebrow">Premium Cookware · Made for Cooks</span>
+        <h1>Tools that <em>outlast</em> the trends.</h1>
+        <p>Hand-finished cast iron, carbon steel, and enameled ceramic — built in the tradition of cookware that gets passed down, not thrown out.</p>
+        <div class="hero-actions">
+          <a href="#shop" class="btn-primary">Explore the Collection</a>
+          <a href="#story" class="btn-ghost">Our craft</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=900&q=80" alt="Cast iron skillet on a stovetop">
+        <div class="hero-badge">
+          <strong>Seasoned by hand</strong>
+          <span>Three-layer flaxseed cure</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="trust">
+      <div class="trust-inner">
+        <div class="trust-item"><strong>Free</strong><span>Shipping over $75</span></div>
+        <div class="trust-item"><strong>30 Day</strong><span>Returns, no questions</span></div>
+        <div class="trust-item"><strong>Lifetime</strong><span>Cast iron warranty</span></div>
+        <div class="trust-item"><strong>USA</strong><span>Ships continental US</span></div>
+      </div>
     </div>
+
+    <section class="section" id="shop">
+      <div class="section-head">
+        <span class="eyebrow">The Collection</span>
+        <h2>Cookware worth keeping</h2>
+        <p>Every piece is chosen to last decades, not seasons.</p>
+      </div>
+      <div class="products" id="products">
+        <div class="catalog-state">Loading the collection…</div>
+      </div>
+    </section>
+
+    <section class="story" id="story">
+      <div class="story-inner">
+        <div class="story-text">
+          <span class="eyebrow">Our Story</span>
+          <h2>Founded in Chicago, built for the long haul</h2>
+          <p>Brasa started in 2021 with a simple frustration: cookware that wears out faster than the meals it makes. We wanted pans that improve with age — that carry the memory of every sear and simmer.</p>
+          <p>Each piece is hand-finished and pre-seasoned in small batches. No nonstick coatings to flake, no planned obsolescence. Just honest tools that reward the cooks who use them.</p>
+        </div>
+        <div class="story-visual">
+          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="Cooking with cast iron">
+        </div>
+      </div>
+    </section>
+
+    <section class="support" id="support">
+      <div class="support-inner">
+        <div class="support-head">
+          <span class="eyebrow">Customer Support</span>
+          <h2>Need a hand?</h2>
+          <p>Order questions, product care, returns — send us a message and our team (with a little help from AI) will get back to you fast.</p>
+        </div>
+        <div class="tally-wrap">
+          <iframe
+            src="https://tally.so/embed/javEX9?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+            loading="lazy"
+            width="100%"
+            height="415"
+            title="Brasa Commerce Support Form"></iframe>
+        </div>
+      </div>
+    </section>
+
   </div>
 
-  <!-- PRODUCTS -->
-  <section class="section" id="shop">
-    <div class="section-head">
-      <span class="eyebrow">The Collection</span>
-      <h2>Cookware worth keeping</h2>
-      <p>Every piece is chosen to last decades, not seasons.</p>
-    </div>
-    <div class="products">
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20No.10%20Cast%20Iron%20Skillet.webp" alt="Brasa No.10 Cast Iron Skillet"></div>
-        <div class="product-body">
-          <div class="product-cat">Cast Iron</div>
-          <h3>Brasa No.10 Cast Iron Skillet</h3>
-          <p>Flagship 10-inch cast iron skillet. Pre-seasoned with three layers of flaxseed oil. 5mm wall thickness for exceptional heat retention. Helper handle and dual pour spouts.</p>
-          <div class="product-foot">
-            <span class="price">$85</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20No.12%20Cast%20Iron%20Skillet.webp" alt="BBrasa No.12 Cast Iron Skillet"></div>
-        <div class="product-body">
-          <div class="product-cat">Cast Iron</div>
-          <h3>Brasa No.12 Cast Iron Skillet</h3>
-          <p>Larger 12-inch cast iron skillet. Pre-seasoned with three layers of flaxseed oil. 5mm wall thickness for exceptional heat retention. Helper handle and dual pour spout.</p>
-          <div class="product-foot">
-            <span class="price">$105</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Carbon%20Steel%20Skillet%2010.webp" alt="Brasa Carbon Steel Skillet 10""></div>
-        <div class="product-body">
-          <div class="product-cat">Carbon Steel</div>
-          <h3>Brasa Carbon Steel Skillet 10"</h3>
-          <p>Professional-grade 10-inch carbon steel skillet with 2mm thick, french-style with long handle. Lighter than cast iron, heats faster, develops non-stick patina with daily use.</p>
-          <div class="product-foot">
-            <span class="price">$125</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Ceramic%20Non-Stick%20Skillet%2010.webp" alt="Brasa Ceramic Non-Stick Skillet 10"></div>
-        <div class="product-body">
-          <div class="product-cat">Ceramic Non-Stick</div>
-          <h3>Brasa Ceramic Non-Stick Skillet 10"</h3>
-          <p>Ceramic-coated aluminum skillet for everyday cooking. PFAS-free, PTFE-free coating. Dishwasher safe. Stays cool handle. Ideal for eggs and delicate fish.</p>
-          <div class="product-foot">
-            <span class="price">$65</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Universal%20Glass%20Lid%2010.webp" alt="Brasa Universal Glass Lid 10""></div>
-        <div class="product-body">
-          <div class="product-cat">Brasa Accessories</div>
-          <h3>Brasa Universal Glass Lid 10"</h3>
-          <p>High quality tempered glass lid with steam vent. Fits all Brasa 10-inch skillets (cast iron, carbon steel, ceramic). Stainless steel rim.</p>
-          <div class="product-foot">
-            <span class="price">$28</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-      <article class="product">
-        <div class="product-img"><img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/Brasa-commers/Brasa%20Cast%20Iron%20Scrubber%20Set.webp" alt="Brasa Cast Iron Scrubber Set"></div>
-             <div class="product-body">
-          <div class="product-cat">Brasa Accessories</div>
-          <h3>Brasa Cast Iron Scrubber Set</h3>
-          <p>Premium and luxury material quality care set for cleaning and care cast iron and carbon steel. Not for use with ceramic-coated pans.</p>
-          <div class="product-foot">
-            <span class="price">$22</span>
-            <button class="add-btn">Add to Cart</button>
-          </div>
-        </div>
-      </article>
-
-    </div>
-  </section>
-
-  <!-- STORY -->
-  <section class="story" id="story">
-    <div class="story-inner">
-      <div class="story-text">
-        <span class="eyebrow">Our Story</span>
-        <h2>Founded in Chicago, built for the long haul</h2>
-        <p>Brasa started in 2021 with a simple frustration: cookware that wears out faster than the meals it makes. We wanted pans that improve with age — that carry the memory of every sear and simmer.</p>
-        <p>Each piece is hand-finished and pre-seasoned in small batches. No nonstick coatings to flake, no planned obsolescence. Just honest tools that reward the cooks who use them.</p>
+  <!-- ══════════ TRACK VIEW ══════════ -->
+  <div id="view-track" hidden>
+    <div class="track-wrap">
+      <div class="section-head" style="margin-bottom:34px;">
+        <span class="eyebrow">Order Tracking</span>
+        <h2>Where's my order?</h2>
+        <p>Enter the order number from your confirmation email.</p>
       </div>
-      <div class="story-visual">
-        <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="Cooking with cast iron">
-      </div>
-    </div>
-  </section>
 
-  <!-- SUPPORT / TALLY -->
-  <section class="support" id="support">
-    <div class="support-inner">
-      <div class="support-head">
-        <span class="eyebrow">Customer Support</span>
-        <h2>Need a hand?</h2>
-        <p>Order questions, product care, returns — send us a message and our team (with a little help from AI) will get back to you fast.</p>
-      </div>
-      <div class="tally-wrap">
-        <iframe
-          src="https://tally.so/embed/javEX9?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
-          loading="lazy"
-          width="100%"
-          height="415"
-          title="Brasa Commerce Support Form"></iframe>
-      </div>
+      <form class="track-search" onsubmit="Brasa.submitTrack(event)">
+        <input id="track-input" placeholder="BC-XXXXXXXX" autocomplete="off" spellcheck="false">
+        <button type="submit" class="btn-primary">Track</button>
+      </form>
+
+      <div id="track-result"></div>
     </div>
-  </section>
+  </div>
 
   <!-- FOOTER -->
   <footer>
@@ -481,17 +632,17 @@
       <div class="footer-cols">
         <div class="footer-col">
           <h4>Shop</h4>
-          <a href="#shop">Cast Iron</a>
-          <a href="#shop">Carbon Steel</a>
-          <a href="#shop">Ceramic</a>
-          <a href="#shop">Accessories</a>
+          <a onclick="Brasa.goShop('shop')">Cast Iron</a>
+          <a onclick="Brasa.goShop('shop')">Carbon Steel</a>
+          <a onclick="Brasa.goShop('shop')">Ceramic</a>
+          <a onclick="Brasa.goShop('shop')">Accessories</a>
         </div>
         <div class="footer-col">
           <h4>Company</h4>
-          <a href="#story">Our Story</a>
-          <a href="#support">Support</a>
-          <a href="#support">Returns</a>
-          <a href="#support">Contact</a>
+          <a onclick="Brasa.goShop('story')">Our Story</a>
+          <a onclick="Brasa.goShop('support')">Support</a>
+          <a href="#track">Track Order</a>
+          <a onclick="Brasa.goShop('support')">Contact</a>
         </div>
         <div class="footer-col">
           <h4>Connect</h4>
@@ -505,6 +656,583 @@
       <p>Crafted for the long haul.</p>
     </div>
   </footer>
+
+  <!-- Overlays get mounted here -->
+  <div id="overlays"></div>
+
+<script>
+const Brasa = (() => {
+  'use strict';
+
+  // Netlify sustituye estos dos placeholders en el build (npm run build).
+  const SUPABASE_URL = '__SUPABASE_URL__';
+  const SUPABASE_KEY = '__SUPABASE_KEY__';
+  const N8N_CHECKOUT = 'https://n8n-production-3503.up.railway.app/webhook/brasa-checkout';
+  const N8N_INTAKE   = 'https://n8n-production-3503.up.railway.app/webhook/brasa-intake';
+
+  const FREE_SHIPPING_OVER = 75;
+  const FLAT_SHIPPING = 8;
+  const CART_KEY = 'brasa_cart';
+
+  // El orden de este objeto manda: la colección abre con el hierro fundido, que
+  // es lo que promete el hero, y cierra con los accesorios.
+  const CATEGORY_LABELS = {
+    cast_iron: 'Cast Iron',
+    carbon_steel: 'Carbon Steel',
+    ceramic: 'Ceramic Non-Stick',
+    accessories: 'Brasa Accessories'
+  };
+  const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS);
+
+  const SHIP_STEPS = [
+    { key: 'preparing',  label: 'Preparing' },
+    { key: 'shipped',    label: 'Shipped' },
+    { key: 'in_transit', label: 'In transit' },
+    { key: 'delivered',  label: 'Delivered' }
+  ];
+
+  // ── Estado ────────────────────────────────────────────────
+  let catalog = [];          // [{sku, product_name, category, description, price, image_url}]
+  let cart = loadCart();     // { SKU: qty }
+  let lastOrder = null;      // último pedido confirmado, para el botón de soporte
+
+  const $ = (id) => document.getElementById(id);
+  const money = (n) => '$' + Number(n).toFixed(2);
+
+  // Todo lo que venga de la base o del cliente pasa por aquí antes de tocar el DOM.
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+  function loadCart() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CART_KEY) || '{}');
+      const clean = {};
+      for (const [sku, qty] of Object.entries(raw)) {
+        const q = Number(qty);
+        if (Number.isInteger(q) && q > 0 && q <= 10) clean[sku] = q;
+      }
+      return clean;
+    } catch { return {}; }
+  }
+  function saveCart() {
+    try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch {}
+    renderCount();
+  }
+
+  // ── Catálogo ──────────────────────────────────────────────
+  async function loadCatalog() {
+    const url = SUPABASE_URL + '/rest/v1/bc_product_catalog'
+      + '?active=eq.true&select=sku,product_name,category,description,price,image_url&order=price.desc';
+    try {
+      const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const rows = await res.json();
+      const rank = (c) => { const i = CATEGORY_ORDER.indexOf(c); return i === -1 ? 99 : i; };
+      catalog = rows.sort((a, b) => rank(a.category) - rank(b.category));
+      renderProducts();
+    } catch (err) {
+      $('products').innerHTML =
+        '<div class="catalog-state">The collection could not be loaded right now. Please refresh in a moment.</div>';
+    }
+  }
+
+  function renderProducts() {
+    if (!catalog.length) {
+      $('products').innerHTML = '<div class="catalog-state">No products available.</div>';
+      return;
+    }
+    $('products').innerHTML = catalog.map((p) => `
+      <article class="product">
+        <div class="product-img">
+          <img src="${esc(p.image_url)}" alt="${esc(p.product_name)}" loading="lazy">
+        </div>
+        <div class="product-body">
+          <div class="product-cat">${esc(CATEGORY_LABELS[p.category] || p.category)}</div>
+          <h3>${esc(p.product_name)}</h3>
+          <p>${esc(p.description)}</p>
+          <div class="product-foot">
+            <span class="price">${money(p.price)}</span>
+            <button class="add-btn" data-sku="${esc(p.sku)}" onclick="Brasa.addToCart('${esc(p.sku)}', this)">Add to Cart</button>
+          </div>
+        </div>
+      </article>`).join('');
+  }
+
+  function product(sku) { return catalog.find((p) => p.sku === sku); }
+
+  // ── Carrito ───────────────────────────────────────────────
+  function addToCart(sku, btn) {
+    cart[sku] = Math.min((cart[sku] || 0) + 1, 10);
+    saveCart();
+    if (btn) {
+      btn.textContent = 'Added ✓';
+      btn.classList.add('added');
+      setTimeout(() => { btn.textContent = 'Add to Cart'; btn.classList.remove('added'); }, 1200);
+    }
+  }
+
+  function setQty(sku, qty) {
+    if (qty <= 0) delete cart[sku];
+    else cart[sku] = Math.min(qty, 10);
+    saveCart();
+    openCart();
+  }
+
+  function cartLines() {
+    return Object.entries(cart).map(([sku, qty]) => {
+      const p = product(sku);
+      if (!p) return null;
+      return { sku, qty, name: p.product_name, price: Number(p.price), image: p.image_url, line: Number(p.price) * qty };
+    }).filter(Boolean);
+  }
+
+  function totals() {
+    const lines = cartLines();
+    const subtotal = Math.round(lines.reduce((s, l) => s + l.line, 0) * 100) / 100;
+    const shipping = lines.length === 0 || subtotal >= FREE_SHIPPING_OVER ? 0 : FLAT_SHIPPING;
+    return { lines, subtotal, shipping, total: Math.round((subtotal + shipping) * 100) / 100 };
+  }
+
+  function renderCount() {
+    const n = Object.values(cart).reduce((s, q) => s + q, 0);
+    $('cart-count').textContent = n;
+  }
+
+  // ── Overlays ──────────────────────────────────────────────
+  function closeOverlay() { $('overlays').innerHTML = ''; }
+
+  function mount(html) {
+    $('overlays').innerHTML = `<div class="scrim" onclick="Brasa.closeOverlay()"></div>${html}`;
+  }
+
+  function openCart() {
+    const t = totals();
+    const body = t.lines.length === 0
+      ? '<div class="empty-cart">Your cart is empty.</div>'
+      : t.lines.map((l) => `
+        <div class="cart-line">
+          <img src="${esc(l.image)}" alt="${esc(l.name)}">
+          <div class="cart-line-info">
+            <h4>${esc(l.name)}</h4>
+            <div class="sku">${esc(l.sku)}</div>
+            <div class="qty-row">
+              <button class="qty-btn" onclick="Brasa.setQty('${esc(l.sku)}', ${l.qty - 1})">−</button>
+              <span>${l.qty}</span>
+              <button class="qty-btn" onclick="Brasa.setQty('${esc(l.sku)}', ${l.qty + 1})">+</button>
+            </div>
+          </div>
+          <div class="cart-line-price">${money(l.line)}</div>
+        </div>`).join('');
+
+    const foot = t.lines.length === 0 ? '' : `
+      <div class="totals-row"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+      <div class="totals-row"><span>Shipping</span><span>${t.shipping === 0 ? 'Free' : money(t.shipping)}</span></div>
+      <div class="totals-row grand"><span>Total</span><span>${money(t.total)}</span></div>
+      <button class="btn-primary" style="width:100%;" onclick="Brasa.openCheckout()">Checkout</button>
+      <div class="ship-note">${t.shipping === 0
+        ? 'Free shipping applied.'
+        : 'Add ' + money(FREE_SHIPPING_OVER - t.subtotal) + ' more for free shipping.'}</div>`;
+
+    mount(`
+      <aside class="drawer">
+        <div class="drawer-head">
+          <h3>Your Cart</h3>
+          <button class="icon-btn" onclick="Brasa.closeOverlay()">×</button>
+        </div>
+        <div class="drawer-body">${body}</div>
+        <div class="drawer-foot">${foot}</div>
+      </aside>`);
+  }
+
+  // ── Checkout ──────────────────────────────────────────────
+  function openCheckout() {
+    const t = totals();
+    if (t.lines.length === 0) return;
+    mount(`
+      <div class="modal">
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3>Checkout</h3>
+            <button class="icon-btn" onclick="Brasa.closeOverlay()">×</button>
+          </div>
+          <div class="modal-body">
+            <div id="checkout-error"></div>
+            <form onsubmit="Brasa.submitCheckout(event)">
+              <div class="field">
+                <label for="co-name">Full name</label>
+                <input id="co-name" required autocomplete="name">
+              </div>
+              <div class="field">
+                <label for="co-email">Email address</label>
+                <input id="co-email" type="email" required autocomplete="email">
+                <div style="font-size:12px;color:var(--muted);margin-top:6px;">
+                  Your order number goes here — it's how you track the order.
+                </div>
+              </div>
+              <div class="field">
+                <label for="co-line1">Street address</label>
+                <input id="co-line1" required autocomplete="address-line1">
+              </div>
+              <div class="field">
+                <label for="co-line2">Apartment, suite (optional)</label>
+                <input id="co-line2" autocomplete="address-line2">
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="co-city">City</label>
+                  <input id="co-city" required autocomplete="address-level2">
+                </div>
+                <div class="field">
+                  <label for="co-state">State</label>
+                  <input id="co-state" required maxlength="2" autocomplete="address-level1" style="text-transform:uppercase;">
+                </div>
+                <div class="field">
+                  <label for="co-zip">ZIP</label>
+                  <input id="co-zip" required autocomplete="postal-code">
+                </div>
+              </div>
+
+              <div class="totals-row" style="margin-top:20px;"><span>Subtotal</span><span>${money(t.subtotal)}</span></div>
+              <div class="totals-row"><span>Shipping</span><span>${t.shipping === 0 ? 'Free' : money(t.shipping)}</span></div>
+              <div class="totals-row grand"><span>Total</span><span>${money(t.total)}</span></div>
+
+              <button type="submit" class="btn-primary" id="pay-btn" style="width:100%;">Pay ${money(t.total)}</button>
+              <div class="ship-note">Demo store — no card is charged and nothing ships.</div>
+            </form>
+          </div>
+        </div>
+      </div>`);
+  }
+
+  async function submitCheckout(ev) {
+    ev.preventDefault();
+    const btn = $('pay-btn');
+    btn.disabled = true;
+    btn.textContent = 'Placing your order…';
+    $('checkout-error').innerHTML = '';
+
+    // Solo SKU y cantidad salen del navegador. n8n resuelve los precios contra
+    // el catálogo: si mandáramos importes, cualquiera editaría la petición.
+    const payload = {
+      customer: {
+        full_name: $('co-name').value.trim(),
+        email: $('co-email').value.trim(),
+        phone: ''
+      },
+      shipping: {
+        line1: $('co-line1').value.trim(),
+        line2: $('co-line2').value.trim(),
+        city: $('co-city').value.trim(),
+        state: $('co-state').value.trim().toUpperCase(),
+        postal_code: $('co-zip').value.trim(),
+        country: 'US'
+      },
+      items: Object.entries(cart).map(([sku, qty]) => ({ sku, qty }))
+    };
+
+    try {
+      const res = await fetch(N8N_CHECKOUT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      // Una validación fallida en n8n devuelve 200 con cuerpo vacío, así que
+      // el único indicio fiable de éxito es que venga el order_number.
+      let data = null;
+      try { data = await res.json(); } catch {}
+      if (!res.ok || !data || !data.order_number) throw new Error('no order number');
+
+      lastOrder = data.order_number;
+      cart = {};
+      saveCart();
+      showConfirmation(data);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+      $('checkout-error').innerHTML =
+        '<div class="form-error">We could not place the order. Please check your details and try again — nothing was charged.</div>';
+    }
+  }
+
+  function showConfirmation(data) {
+    mount(`
+      <div class="modal">
+        <div class="modal-card">
+          <div class="modal-body">
+            <div class="confirm-box">
+              <div class="check">✓</div>
+              <p style="color:var(--charcoal);font-weight:600;">Payment confirmed</p>
+              <div class="num">${esc(data.order_number)}</div>
+              <p>We sent a confirmation to your email with a tracking link.</p>
+              <p style="margin-bottom:22px;">Keep this number — it's how you look up your order.</p>
+              <a class="btn-primary" href="#track/${encodeURIComponent(data.order_number)}"
+                 onclick="Brasa.closeOverlay()">Track this order</a>
+              <div style="margin-top:16px;">
+                <a class="btn-ghost" onclick="Brasa.closeOverlay(); Brasa.goShop('shop')">Keep shopping</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`);
+  }
+
+  // ── Seguimiento ───────────────────────────────────────────
+  // bc_orders no tiene ninguna política RLS: nadie la lee directo. La única
+  // puerta es esta función SECURITY DEFINER, que exige conocer el número.
+  async function fetchOrder(orderNumber) {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/bc_track_order', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_order_number: orderNumber })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  }
+
+  function submitTrack(ev) {
+    ev.preventDefault();
+    const num = $('track-input').value.trim().toUpperCase();
+    if (!num) return;
+    location.hash = '#track/' + encodeURIComponent(num);
+    // Si ya estábamos en ese hash, hashchange no dispara: pintamos a mano.
+    showOrder(num);
+  }
+
+  async function showOrder(orderNumber) {
+    const box = $('track-result');
+    box.innerHTML = '<div class="not-found"><p>Looking up your order…</p></div>';
+    let order;
+    try {
+      order = await fetchOrder(orderNumber);
+    } catch (err) {
+      box.innerHTML = `<div class="not-found">
+        <h3>Something went wrong</h3>
+        <p>We could not reach the order service. Please try again in a moment.</p>
+      </div>`;
+      return;
+    }
+    if (!order) {
+      box.innerHTML = `<div class="not-found">
+        <h3>No order with that number</h3>
+        <p>Check the number in your confirmation email — it looks like <strong>BC-7K2M9QX4</strong>.</p>
+      </div>`;
+      return;
+    }
+    lastOrder = order.order_number;
+    box.innerHTML = renderOrder(order);
+  }
+
+  function renderOrder(o) {
+    const ship = o.shipment || { status: 'preparing' };
+    const idx = Math.max(0, SHIP_STEPS.findIndex((s) => s.key === ship.status));
+
+    const steps = SHIP_STEPS.map((s, i) => {
+      const cls = i < idx ? 'done' : (i === idx ? 'current' : '');
+      return `<div class="step ${cls}"><div class="bar"></div><div class="dot"></div><div class="label">${s.label}</div></div>`;
+    }).join('');
+
+    const items = (o.items || []).map((i) => `
+      <div class="order-item">
+        <div>${esc(i.product_name)}<div class="sku">${esc(i.sku)} · Qty ${i.qty}</div></div>
+        <div>${money(Number(i.unit_price) * i.qty)}</div>
+      </div>`).join('');
+
+    const dateFmt = (d, opts) => d
+      ? new Date(d).toLocaleDateString('en-US', Object.assign({ timeZone: 'UTC' }, opts))
+      : '—';
+
+    const carrier = ship.tracking_number
+      ? `<div class="order-section">
+           <h4>Carrier</h4>
+           <div class="carrier-grid">
+             <div><span>Carrier</span><strong>${esc(ship.carrier || '—')}</strong></div>
+             <div><span>Tracking number</span><strong>${esc(ship.tracking_number)}</strong></div>
+           </div>
+         </div>`
+      : '';
+
+    return `
+      <div class="order-card">
+        <div class="order-head">
+          <div>
+            <div class="num">${esc(o.order_number)}</div>
+            <div class="date">Placed ${dateFmt(o.created_at, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="eta-label">${ship.status === 'delivered' ? 'Delivered' : 'Estimated delivery'}</div>
+            <div class="eta">${dateFmt(ship.delivered_at || ship.eta_date, { month: 'short', day: 'numeric' })}</div>
+          </div>
+        </div>
+
+        <div class="progress"><div class="steps">${steps}</div></div>
+
+        ${carrier}
+
+        <div class="order-section">
+          <h4>Items</h4>
+          ${items}
+          <div class="totals-row" style="margin-top:14px;"><span>Subtotal</span><span>${money(o.subtotal)}</span></div>
+          <div class="totals-row"><span>Shipping</span><span>${Number(o.shipping) === 0 ? 'Free' : money(o.shipping)}</span></div>
+          <div class="totals-row grand"><span>Total</span><span>${money(o.total)}</span></div>
+        </div>
+
+        <div class="order-section">
+          <h4>Shipping to</h4>
+          <div style="font-size:14px;line-height:1.6;">
+            ${esc(o.ship_name)}<br>
+            ${esc(o.ship_line1)}${o.ship_line2 ? '<br>' + esc(o.ship_line2) : ''}<br>
+            ${esc(o.ship_city)}, ${esc(o.ship_state)} ${esc(o.ship_postal_code)}
+          </div>
+        </div>
+
+        <div class="order-section">
+          <button class="btn-primary" onclick="Brasa.openProblem('${esc(o.order_number)}')">Problem with this order</button>
+        </div>
+      </div>
+
+      <div class="track-note">
+        Anyone with this order number can see these details. Treat it like a receipt —
+        we ask for it instead of a password so you never need an account.
+      </div>`;
+  }
+
+  // ── "Problem with this order" ─────────────────────────────
+  // Entra por el MISMO webhook que el formulario de soporte, así que pasa por la
+  // clasificación de DeepSeek y cae en el panel de Jordan como cualquier ticket.
+  // El número va dentro del mensaje; un trigger en la base lo extrae a su columna.
+  function openProblem(orderNumber) {
+    mount(`
+      <div class="modal">
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3>Problem with ${esc(orderNumber)}</h3>
+            <button class="icon-btn" onclick="Brasa.closeOverlay()">×</button>
+          </div>
+          <div class="modal-body">
+            <div id="problem-error"></div>
+            <form onsubmit="Brasa.submitProblem(event, '${esc(orderNumber)}')">
+              <div class="field">
+                <label for="pr-name">Your name</label>
+                <input id="pr-name" required>
+              </div>
+              <div class="field">
+                <label for="pr-email">Email address</label>
+                <input id="pr-email" type="email" required>
+              </div>
+              <div class="field">
+                <label for="pr-msg">What went wrong?</label>
+                <textarea id="pr-msg" rows="5" required placeholder="Tell us what happened and we'll sort it out."></textarea>
+              </div>
+              <button type="submit" class="btn-primary" id="pr-btn" style="width:100%;">Send message</button>
+            </form>
+          </div>
+        </div>
+      </div>`);
+  }
+
+  async function submitProblem(ev, orderNumber) {
+    ev.preventDefault();
+    const btn = $('pr-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const name = $('pr-name').value.trim();
+    const email = $('pr-email').value.trim();
+    const message = '[Order ' + orderNumber + '] ' + $('pr-msg').value.trim();
+
+    // El webhook de intake nació para Tally, así que respetamos su forma.
+    const payload = { data: { fields: [
+      { label: 'Full name',     value: name },
+      { label: 'Email address', value: email },
+      { label: 'Phone number',  value: '' },
+      { label: 'Message',       value: message }
+    ] } };
+
+    try {
+      const res = await fetch(N8N_INTAKE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      mount(`
+        <div class="modal">
+          <div class="modal-card">
+            <div class="modal-body">
+              <div class="confirm-box">
+                <div class="check">✓</div>
+                <p style="color:var(--charcoal);font-weight:600;">Message sent</p>
+                <p style="margin:10px 0 22px;">
+                  Our team has your message about ${esc(orderNumber)} and will reply by email.
+                </p>
+                <button class="btn-primary" onclick="Brasa.closeOverlay()">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>`);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+      $('problem-error').innerHTML =
+        '<div class="form-error">We could not send that just now. Please try again in a moment.</div>';
+    }
+  }
+
+  // ── Rutas ─────────────────────────────────────────────────
+  // Una sola página. #track y #track/BC-XXXXXXXX abren la ventana de
+  // seguimiento; el enlace del correo cae directo en la segunda forma.
+  function route() {
+    const hash = location.hash || '';
+    const match = hash.match(/^#track(?:\/(.+))?$/);
+
+    if (match) {
+      $('view-shop').hidden = true;
+      $('view-track').hidden = false;
+      const num = match[1] ? decodeURIComponent(match[1]).trim().toUpperCase() : '';
+      $('track-input').value = num;
+      if (num) showOrder(num);
+      else $('track-result').innerHTML = '';
+      window.scrollTo(0, 0);
+    } else {
+      $('view-shop').hidden = false;
+      $('view-track').hidden = true;
+    }
+  }
+
+  function goShop(anchor) {
+    if (location.hash.startsWith('#track')) {
+      location.hash = anchor ? '#' + anchor : '#';
+    } else if (anchor) {
+      const el = $(anchor);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    setTimeout(() => {
+      if (anchor) { const el = $(anchor); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
+  }
+
+  window.addEventListener('hashchange', route);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOverlay(); });
+
+  renderCount();
+  loadCatalog().then(route);
+
+  return {
+    addToCart, setQty, openCart, closeOverlay,
+    openCheckout, submitCheckout,
+    submitTrack, openProblem, submitProblem,
+    goShop
+  };
+})();
+</script>
 
 </body>
 </html>
