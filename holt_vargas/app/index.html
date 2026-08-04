@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>H&V Paralegal Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --navy: #1E3A5F;
@@ -32,9 +33,6 @@
     .nav-icon { font-size: 16px; width: 20px; }
     .sidebar-footer { padding: 18px 20px; border-top: 1px solid rgba(255,255,255,0.12); }
     .sidebar-footer label { display: block; color: rgba(255,255,255,0.45); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
-    .paralegal-select { width: 100%; padding: 9px 10px; background: rgba(255,255,255,0.08); color: var(--gold); border: 1px solid rgba(201,168,76,0.35); border-radius: 5px; font-size: 13px; font-weight: bold; outline: none; cursor: pointer; }
-    .paralegal-select option { background: var(--navy-dark); color: #fff; }
-    .paralegal-hint { color: rgba(255,255,255,0.4); font-size: 11px; margin-top: 8px; line-height: 1.5; }
 
     /* LAYOUT */
     .main { margin-left: 240px; min-height: 100vh; }
@@ -158,11 +156,56 @@
       .stats-row, .analytics-grid, .field-grid { grid-template-columns: 1fr; }
       .detail-panel { width: 100%; }
     }
+
+    /* LOGIN */
+    .login { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--cream); z-index: 999; padding: 24px; }
+    .login-card { width: 100%; max-width: 370px; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 34px 30px; box-shadow: 0 6px 28px rgba(30,58,95,0.10); }
+    .login-logo { display: block; max-height: 44px; width: auto; margin: 0 auto 22px; }
+    .login-title { font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: var(--navy); text-align: center; margin-bottom: 5px; }
+    .login-sub { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 24px; }
+    .login-field { margin-bottom: 13px; }
+    .login-field label { display: block; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-light); margin-bottom: 6px; }
+    .login-field input { width: 100%; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: var(--text); background: #fcfbf8; border: 1px solid var(--border); border-radius: 5px; padding: 10px 12px; outline: none; }
+    .login-field input:focus { border-color: var(--navy); }
+    .login-btn { width: 100%; margin-top: 8px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); background: var(--navy); border: none; border-radius: 5px; padding: 12px; cursor: pointer; }
+    .login-btn:hover { background: var(--navy-light); }
+    .login-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .login-error { display: none; margin-top: 13px; font-size: 13px; color: var(--red); background: var(--red-bg); border-radius: 5px; padding: 10px 12px; line-height: 1.5; }
+    .login-foot { margin-top: 20px; font-size: 11px; color: var(--text-light); text-align: center; line-height: 1.6; }
+
+    /* READ-ONLY FIELD */
+    .field-ro { font-size: 13px; color: var(--text); padding: 9px 0; border-bottom: 1px solid #f2efe8; }
+
+    /* SIDEBAR USER */
+    .sidebar-user-name { color: var(--gold); font-size: 14px; font-weight: bold; }
+    .sidebar-user-role { color: rgba(255,255,255,0.45); font-size: 11px; margin-top: 2px; }
+    .signout-btn { width: 100%; margin-top: 12px; background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; padding: 8px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; font-family: Arial, Helvetica, sans-serif; }
+    .signout-btn:hover { border-color: var(--gold); color: var(--gold); }
   </style>
 </head>
 <body>
 
-<div class="sidebar">
+<!-- LOGIN GATE -->
+<div class="login" id="login" style="display:none">
+  <form class="login-card" id="loginForm">
+    <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png" alt="Holt &amp; Vargas" class="login-logo" onerror="this.style.display='none'">
+    <div class="login-title">Paralegal Dashboard</div>
+    <div class="login-sub">Sign in with your firm account</div>
+    <div class="login-field">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" autocomplete="username" required>
+    </div>
+    <div class="login-field">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="login-btn" id="loginBtn">Sign in</button>
+    <div class="login-error" id="loginError"></div>
+    <div class="login-foot">Holt &amp; Vargas Immigration Law<br>Authorised personnel only</div>
+  </form>
+</div>
+
+<div class="sidebar" id="sidebar" style="display:none">
   <div class="sidebar-logo">
     <img src="https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png" style="max-height:32px;width:auto;" alt="Holt &amp; Vargas">
   </div>
@@ -173,13 +216,14 @@
     <a class="nav-item" data-tab="analytics" href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
   </nav>
   <div class="sidebar-footer">
-    <label for="paralegal-select">Signed in as</label>
-    <select class="paralegal-select" id="paralegal-select"></select>
-    <div class="paralegal-hint" id="paralegal-hint">Pick who you are to record reviews.</div>
+    <label>Signed in as</label>
+    <div class="sidebar-user-name" id="userName"></div>
+    <div class="sidebar-user-role" id="userRole"></div>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
   </div>
 </div>
 
-<div class="main">
+<div class="main" id="main" style="display:none">
   <div class="topbar">
     <div class="topbar-title" id="topbar-title">Case Queue</div>
     <div class="topbar-right">
@@ -265,6 +309,10 @@
   const SUPABASE_URL = "__SUPABASE_URL__";
   const SUPABASE_KEY = "__SUPABASE_KEY__";
 
+  /* supabase-js is used for authentication only — session persistence and silent
+     token refresh. The data calls below stay as plain fetch against PostgREST. */
+  const sbAuth = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
   const STATUS_BY_STAGE = {
     Lead:   ['Intake Received', 'In Review', 'Awaiting Engagement'],
     Client: ['Open', 'Pending Documents', 'Submitted', 'Under Review', 'Approved', 'Denied', 'Closed']
@@ -275,7 +323,9 @@
   let allCases = [];
   let allClients = [];
   let allStaff = [];
-  let currentParalegalId = null;
+  let currentParalegalId = null;   /* set from the signed-in account, not a picker */
+  let currentParalegal = null;
+  let accessToken = null;          /* current JWT, refreshed via onAuthStateChange */
   let openCaseId = null;
   let typeFilter = 'all';
   let searchTerm = '';
@@ -284,11 +334,16 @@
      not be edited in that state or saving would blank them out. */
   let staffUnavailable = false;
 
-  const baseHeaders = {
-    apikey: SUPABASE_KEY,
-    Authorization: 'Bearer ' + SUPABASE_KEY,
-    'Content-Type': 'application/json'
-  };
+  /* apikey identifies the project; Authorization carries the signed-in user's JWT,
+     which is what the RLS policies read. Built per call so a refreshed token is
+     always picked up. Without the JWT every query comes back empty. */
+  function baseHeaders() {
+    return {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + (accessToken || SUPABASE_KEY),
+      'Content-Type': 'application/json'
+    };
+  }
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -310,7 +365,7 @@
   }
 
   async function api(path, options) {
-    const opts = Object.assign({ headers: Object.assign({}, baseHeaders) }, options || {});
+    const opts = Object.assign({ headers: baseHeaders() }, options || {});
     if (opts.method && opts.method !== 'GET') opts.headers.Prefer = 'return=representation';
     const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, opts);
     const text = await res.text();
@@ -344,7 +399,7 @@
       staffUnavailable = !allStaff.length && allCases.some(c => c.attorney_id || c.paralegal_id);
 
       renderAccessWarning();
-      renderParalegalSelect();
+      renderSignedInUser();
       updateStats();
       renderQueue();
       renderPipeline();
@@ -383,34 +438,14 @@
     return (c.hvl_case_notes || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
 
-  /* ---------- PARALEGAL SELECTOR ---------- */
+  /* ---------- SIGNED-IN PARALEGAL ----------
+     Identity comes from the JWT, not from a picker. Every case this dashboard
+     loads is already scoped to this person by RLS, so there is nothing to choose. */
 
-  function renderParalegalSelect() {
-    const sel = document.getElementById('paralegal-select');
-    const paras = allStaff.filter(s => s.role === 'Paralegal' && s.active);
-    sel.innerHTML = '<option value="">Choose a paralegal&hellip;</option>' +
-      paras.map(p => '<option value="' + p.id + '">' + esc(p.full_name) + '</option>').join('');
-    if (currentParalegalId) sel.value = currentParalegalId;
-    updateParalegalHint();
+  function renderSignedInUser() {
+    document.getElementById('userName').textContent = currentParalegal ? currentParalegal.full_name : '';
+    document.getElementById('userRole').textContent = currentParalegal ? currentParalegal.role : '';
   }
-
-  function updateParalegalHint() {
-    const hint = document.getElementById('paralegal-hint');
-    hint.textContent = staffUnavailable
-      ? 'Staff directory is not readable with this key, so reviews cannot be signed off.'
-      : currentParalegalId
-        ? 'Reviews you close will be recorded under your name.'
-        : 'Pick who you are to record reviews.';
-  }
-
-  document.getElementById('paralegal-select').addEventListener('change', e => {
-    currentParalegalId = e.target.value || null;
-    updateParalegalHint();
-    if (openCaseId) {
-      const c = allCases.find(x => x.id === openCaseId);
-      if (c) buildPanel(c);
-    }
-  });
 
   /* ---------- STATS ---------- */
 
@@ -661,8 +696,7 @@
           (isComplete
             ? '<button class="btn btn-ghost" id="reopen-review">Reopen review</button>' +
               '<span class="status-text">Closed by ' + esc(reviewer ? reviewer.full_name : 'unknown') + ' on ' + fmtDate(r.reviewed_at) + '</span>'
-            : '<button class="btn btn-success" id="complete-review">Mark ready for attorney</button>' +
-              (currentParalegalId ? '' : '<span class="status-text">Pick your name in the sidebar first.</span>')) +
+            : '<button class="btn btn-success" id="complete-review">Mark ready for attorney</button>') +
         '</div>' +
       '</div>' +
 
@@ -696,16 +730,15 @@
       '<div class="panel-section">' +
         '<div class="panel-section-title">Client details</div>' +
         '<div class="field-grid">' +
-          '<div class="field"><label>Full name</label><input id="f-name" value="' + esc(cl.full_name) + '"></div>' +
-          '<div class="field"><label>Email</label><input id="f-email" value="' + esc(cl.email) + '"></div>' +
-          '<div class="field"><label>Phone</label><input id="f-phone" value="' + esc(cl.phone) + '"></div>' +
-          '<div class="field"><label>Country of origin</label><input id="f-country" value="' + esc(cl.country_of_origin) + '"></div>' +
-          '<div class="field"><label>Date of birth</label><input type="date" id="f-dob" value="' + esc(cl.date_of_birth) + '"></div>' +
-          '<div class="field"><label>Preferred language</label><select id="f-lang">' +
-            '<option value=""' + (cl.preferred_language ? '' : ' selected') + '>Not detected</option>' +
-            selectOptions(['Spanish', 'English'], cl.preferred_language) + '</select></div>' +
+          '<div class="field"><label>Full name</label><div class="field-ro">' + esc(cl.full_name) + '</div></div>' +
+          '<div class="field"><label>Email</label><div class="field-ro">' + esc(cl.email) + '</div></div>' +
+          '<div class="field"><label>Phone</label><div class="field-ro">' + (cl.phone ? esc(cl.phone) : '—') + '</div></div>' +
+          '<div class="field"><label>Country of origin</label><div class="field-ro">' + (cl.country_of_origin ? esc(cl.country_of_origin) : '—') + '</div></div>' +
+          '<div class="field"><label>Date of birth</label><div class="field-ro">' + fmtDate(cl.date_of_birth) + '</div></div>' +
+          '<div class="field"><label>Preferred language</label><div class="field-ro">' + (cl.preferred_language ? esc(cl.preferred_language) : 'Not detected') + '</div></div>' +
         '</div>' +
-        '<div class="btn-row"><button class="btn btn-primary" id="save-client">Save client</button></div>' +
+        '<div class="status-text" style="margin-top:12px">Client records are read-only here. They are maintained in the firm&rsquo;s case management system, ' +
+        'and the intake automation matches returning clients on their email address.</div>' +
       '</div>' +
 
       '<div class="status-text" style="padding-top:14px;border-top:1px solid var(--border);">' +
@@ -749,21 +782,9 @@
       } catch (e) { toast('Could not save the case. ' + e.message, true); }
     };
 
-    $('save-client').onclick = async () => {
-      const body = {
-        full_name: $('f-name').value,
-        email: $('f-email').value,
-        phone: $('f-phone').value || null,
-        country_of_origin: $('f-country').value || null,
-        date_of_birth: $('f-dob').value || null,
-        preferred_language: $('f-lang').value || null
-      };
-      try {
-        await api('hvl_clients?id=eq.' + c.client_id, { method: 'PATCH', body: JSON.stringify(body) });
-        toast('Client saved');
-        await loadAll();
-      } catch (e) { toast('Could not save the client. ' + e.message, true); }
-    };
+    /* Client records are deliberately read-only: hvl_clients is a shared pool with
+       no per-row owner, edits would be untraceable, and the email column is the key
+       the n8n intake upserts on — changing it would fork the client into a duplicate. */
 
     async function saveDocs(newReceived, newMissing) {
       if (!r.id) { toast('This case has no intake review to update.', true); return; }
@@ -814,7 +835,7 @@
     const completeBtn = $('complete-review');
     if (completeBtn) completeBtn.onclick = async () => {
       if (!r.id) { toast('This case has no intake review to close.', true); return; }
-      if (!currentParalegalId) { toast('Pick who you are in the sidebar first.', true); return; }
+      if (!currentParalegalId) { toast('Your session has expired. Sign in again.', true); return; }
       if (missing.length) {
         const ok = confirm(missing.length + ' document(s) are still outstanding. Mark the case ready anyway?');
         if (!ok) return;
@@ -904,8 +925,85 @@
   document.getElementById('refresh-btn').onclick = loadAll;
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-  loadAll();
-  setInterval(() => { if (!openCaseId) loadAll(); }, 60000);
+  /* ---------- AUTH ---------- */
+
+  let pendingLoginError = '';
+  let pollTimer = null;
+
+  function showLogin(message) {
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('main').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+    const err = document.getElementById('loginError');
+    err.textContent = message || '';
+    err.style.display = message ? 'block' : 'none';
+  }
+
+  function showApp() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('sidebar').style.display = 'flex';
+    document.getElementById('main').style.display = 'block';
+    renderSignedInUser();
+    if (!pollTimer) pollTimer = setInterval(() => { if (!openCaseId) loadAll(); }, 60000);
+    loadAll();
+  }
+
+  /* Maps the Auth identity onto the hvl_attorneys row. This call already needs a
+     valid JWT — the staff directory is readable by authenticated users only. */
+  async function loadParalegal() {
+    const { data: { user } } = await sbAuth.auth.getUser();
+    if (!user) return null;
+    const rows = await api('hvl_attorneys?auth_user_id=eq.' + user.id + '&select=id,full_name,role&limit=1');
+    return (rows && rows[0]) || null;
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.textContent = 'Signing in…';
+    const { error } = await sbAuth.auth.signInWithPassword({
+      email: document.getElementById('loginEmail').value.trim(),
+      password: document.getElementById('loginPassword').value
+    });
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+    if (error) showLogin(error.message);
+    /* On success onAuthStateChange takes over from here. */
+  });
+
+  async function signOut() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await sbAuth.auth.signOut();
+  }
+
+  /* Fires on page load, sign-in, sign-out and every silent token refresh. Keeping
+     accessToken in sync here is what keeps the fetch helper authenticated. */
+  sbAuth.auth.onAuthStateChange(async (_event, session) => {
+    accessToken = session ? session.access_token : null;
+    if (session) {
+      try {
+        currentParalegal = await loadParalegal();
+      } catch (err) {
+        currentParalegal = null;
+      }
+      if (!currentParalegal) {
+        pendingLoginError = 'This account is not linked to a staff profile.';
+        await sbAuth.auth.signOut();
+        return;
+      }
+      currentParalegalId = currentParalegal.id;
+      document.getElementById('loginPassword').value = '';
+      showApp();
+    } else {
+      currentParalegal = null;
+      currentParalegalId = null;
+      allCases = []; allClients = []; allStaff = []; openCaseId = null;
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      showLogin(pendingLoginError);
+      pendingLoginError = '';
+    }
+  });
 </script>
 </body>
 </html>
