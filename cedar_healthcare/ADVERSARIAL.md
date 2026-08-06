@@ -68,11 +68,26 @@ line is *displayed*, so a crafted name can make text in the dashboard or the pra
 differently from what is stored. Nobody is harmed by the probe as sent, and stripping bidi controls
 on the way in is the fix. Recorded, not done.
 
-**B3 is a gap, not a pass.** No size limit exists anywhere on the path: not at the webhook, not in
-`Set Fields`, not on the column. The whole 125 KB was classified, stored, and interpolated into the
-practitioner alert email, which was sent. A row that size in a queue view is a denial of service
-against the humans reading it. A length cap in `Set Fields` with the remainder truncated and a note
-appended is the obvious fix.
+**B3 was a gap. Fixed 2026-08-06.** When probed there was no size limit anywhere on the path — not at
+the webhook, not in `Set Fields`, not on the column — so the whole 125 KB was classified, stored and
+mailed to the practitioner. A row that size in a queue view is a denial of service against the humans
+reading it.
+
+`Set Fields` now truncates at **2 000 characters**. Re-probed after the change: 12 864 characters
+sent, **2 000 stored**, still classified correctly as Physiotherapy / urgency 2 / high.
+
+The bound comes from the data. Across 47 real rows the longest genuine message is 457 characters, the
+mean 238, the p95 426; the densest case in the eval set is around 700. 2 000 is more than four times
+anything anyone has actually written.
+
+The same cap is set on the Tally field, but that is a client-side control and does not bound the
+endpoint — every probe in this document reached the webhook directly with `curl` and no credentials.
+The server-side slice is the one that holds.
+
+*A 1 000-character **minimum** was also tried on the Tally field and withdrawn. Measured against the
+47 real rows it would have rejected 46 of them, and the one submission it admitted was the 125 KB
+attack payload. It also duplicates a path that already works: an empty message is not lost, it is
+queued as `Unknown`, unassigned and flagged for a callback — see section 1.*
 
 ---
 
@@ -198,9 +213,9 @@ primitive. The fix is the same escape, workflow-side.
 | Finding | State |
 |---|---|
 | Stored XSS in the dashboard | fixed, `47dfe53`, verified live |
-| Same injection into the practitioner email HTML | open |
+| No size limit on an intake | fixed — `Set Fields` truncates at 2 000 chars, re-probed |
+| Same injection into the practitioner email HTML | accepted — sole recipient is the owner; cost of closing stated |
 | No input validation before the paid model call | open — outcome correct, mechanism absent |
-| No size limit on an intake | open — 125 KB accepted and mailed |
 | Bidi control characters stored verbatim | open — display spoofing only |
 | Empty and malformed input | correct as-is |
 | Non-English input | correct, but credited to the model |
