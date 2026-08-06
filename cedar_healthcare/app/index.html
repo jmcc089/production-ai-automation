@@ -323,7 +323,7 @@
 
             async function renderIntake() {
                 const [intakeRes, statsRes] = await Promise.all([
-                    sb.from("ch_intake_requests").select("*, ch_patients(full_name, phone)").order("created_at", { ascending: false }),
+                    sb.from("ch_intake_requests").select("*, ch_patients(full_name, phone), ch_practitioners(full_name)").order("created_at", { ascending: false }),
                     sb.from("ch_intake_requests").select("id, urgency_level, status")
                 ]);
                 const rows = intakeRes.data || [];
@@ -382,7 +382,7 @@
                             : `<table>
                                 <thead><tr>
                                     <th>Patient</th><th>Service</th><th>Urgency</th>
-                                    <th>Recommended Action</th><th>Confidence</th><th>Status</th><th>Date</th>
+                                    <th>Recommended Action</th><th>Confidence</th><th>Assigned</th><th>Status</th><th>Date</th>
                                 </tr></thead>
                                 <tbody id="intakeBody">${filtered.map(r => renderIntakeRow(r)).join("")}</tbody>
                                </table>`
@@ -398,9 +398,12 @@
                 const urgencyBadge  = r.urgency_level==3 ? '<span class="badge badge-urgent">● Urgent</span>'
                                     : r.urgency_level==2 ? '<span class="badge badge-moderate">● Moderate</span>'
                                     :                      '<span class="badge badge-routine">● Routine</span>';
-                const confBadge     = r.confidence_flag
-                                    ? '<span class="badge badge-high">✓ High</span>'
-                                    : '<span class="badge badge-review">⚠ Review</span>';
+                const confBadge     = r.needs_review
+                                    ? '<span class="badge badge-review">⚠ Review</span>'
+                                    : '<span class="badge badge-high">✓ High</span>';
+                const assignedCell  = r.practitioner_id
+                                    ? `<span style="font-size:12px;color:var(--slate-mid)">${(r.ch_practitioners || {}).full_name || "—"}</span>`
+                                    : `<button onclick="claimCase('${r.id}')" style="font-size:11px;font-weight:600;padding:5px 12px;border:1px solid var(--brand,#1d40ae);border-radius:6px;background:var(--brand,#1d40ae);color:#fff;cursor:pointer">Claim</button>`;
                 const statusColor   = r.status==="New" ? "badge-new" : r.status==="In Progress" ? "badge-progress" : "badge-resolved";
                 const date          = new Date(r.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
                 const isExpanded    = expandedRow === r.id;
@@ -412,6 +415,7 @@
                     <td>${urgencyBadge}</td>
                     <td style="max-width:200px;font-size:12px;color:var(--slate-mid)">${(r.recommended_action||"—").substring(0,60)}${(r.recommended_action||"").length>60?"…":""}</td>
                     <td>${confBadge}</td>
+                    <td onclick="event.stopPropagation()">${assignedCell}</td>
                     <td onclick="event.stopPropagation()">
                         <select class="status-select ${statusColor}" onchange="updateStatus('${r.id}',this.value)">
                             <option ${r.status==="New"?"selected":""}>New</option>
@@ -423,7 +427,7 @@
                 </tr>
                 ${isExpanded ? `
                 <tr class="expanded-row">
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="expanded-content">
                             <div class="expanded-section">
                                 <h4>Patient Message</h4>
@@ -447,6 +451,20 @@
             async function updateStatus(id, status) {
                 await sb.from("ch_intake_requests").update({ status }).eq("id", id);
                 showNotification(`Status updated to "${status}"`);
+                setTimeout(renderIntake, 300);
+            }
+
+            // Unassigned cases (service_category "Unknown", or any intake the workflow could not
+            // route) are visible to every practitioner until someone takes ownership. RLS allows
+            // the update only when the row ends up assigned to the caller, so a case cannot be
+            // handed to someone else or pushed back into the unassigned pool from here.
+            async function claimCase(id) {
+                const { error } = await sb
+                    .from("ch_intake_requests")
+                    .update({ practitioner_id: currentPractitioner.id })
+                    .eq("id", id);
+                if (error) { showNotification("Could not claim this case: " + error.message); return; }
+                showNotification("Case claimed — it is now assigned to you");
                 setTimeout(renderIntake, 300);
             }
 
@@ -710,8 +728,9 @@
                 render();
             }
 
-            // Maps the Auth identity onto the practitioner row. Everything the
-            // dashboard shows is already scoped by RLS to this same person.
+            // Maps the Auth identity onto the practitioner row. The dashboard adds no filtering of
+            // its own — RLS scopes every query to this practitioner's own cases plus any intake
+            // that is still unassigned, so that nothing the workflow could not route stays hidden.
             async function loadPractitioner() {
                 const { data: { user } } = await sb.auth.getUser();
                 if (!user) return null;
