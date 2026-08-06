@@ -282,7 +282,25 @@
             const SUPABASE_URL = "__SUPABASE_URL__";
             const SUPABASE_KEY = "__SUPABASE_KEY__";
             const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
+
+            // Every view below builds HTML with template literals and assigns it to innerHTML,
+            // and the values come from ch_intake_requests / ch_patients — which anyone on the
+            // internet can write to through the public intake webhook, with no credentials.
+            // Interpolating them unescaped was stored XSS: a name field containing
+            // <img src=x onerror=...> executed in a signed-in practitioner's browser, which
+            // holds the Supabase session that RLS grants clinical access to.
+            // Every interpolation of a database value goes through esc(). Numbers, dates and
+            // values this file computes itself do not, because they cannot carry markup.
+            function esc(v) {
+                if (v === null || v === undefined) return "";
+                return String(v)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
             // Clock
             function updateClock() {
                 const now = new Date();
@@ -358,7 +376,7 @@
                         </select>
                         <select class="filter-select" onchange="intakeFilters.service=this.value;renderIntake()">
                             <option value="">All services</option>
-                            ${services.map(s => `<option value="${s}" ${intakeFilters.service===s?"selected":""}>${s}</option>`).join("")}
+                            ${services.map(s => `<option value="${esc(s)}" ${intakeFilters.service===s?"selected":""}>${esc(s)}</option>`).join("")}
                         </select>
                         <select class="filter-select" onchange="intakeFilters.status=this.value;renderIntake()">
                             <option value="">All status</option>
@@ -402,7 +420,7 @@
                                     ? '<span class="badge badge-review">⚠ Review</span>'
                                     : '<span class="badge badge-high">✓ High</span>';
                 const assignedCell  = r.practitioner_id
-                                    ? `<span style="font-size:12px;color:var(--slate-mid)">${(r.ch_practitioners || {}).full_name || "—"}</span>`
+                                    ? `<span style="font-size:12px;color:var(--slate-mid)">${esc((r.ch_practitioners || {}).full_name || "—")}</span>`
                                     : `<button onclick="claimCase('${r.id}')" style="font-size:11px;font-weight:600;padding:5px 12px;border:1px solid var(--brand,#1d40ae);border-radius:6px;background:var(--brand,#1d40ae);color:#fff;cursor:pointer">Claim</button>`;
                 const statusColor   = r.status==="New" ? "badge-new" : r.status==="In Progress" ? "badge-progress" : "badge-resolved";
                 const date          = new Date(r.created_at).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" });
@@ -410,10 +428,10 @@
 
                 return `
                 <tr class="${urgencyClass}" onclick="toggleRow('${r.id}')">
-                    <td><strong>${name}</strong><br><span style="font-size:11px;color:var(--slate-light)">${phone}</span></td>
-                    <td>${r.service_category || "—"}</td>
+                    <td><strong>${esc(name)}</strong><br><span style="font-size:11px;color:var(--slate-light)">${esc(phone)}</span></td>
+                    <td>${esc(r.service_category || "—")}</td>
                     <td>${urgencyBadge}</td>
-                    <td style="max-width:200px;font-size:12px;color:var(--slate-mid)">${(r.recommended_action||"—").substring(0,60)}${(r.recommended_action||"").length>60?"…":""}</td>
+                    <td style="max-width:200px;font-size:12px;color:var(--slate-mid)">${esc((r.recommended_action||"—").substring(0,60))}${(r.recommended_action||"").length>60?"…":""}</td>
                     <td>${confBadge}</td>
                     <td onclick="event.stopPropagation()">${assignedCell}</td>
                     <td onclick="event.stopPropagation()">
@@ -431,14 +449,14 @@
                         <div class="expanded-content">
                             <div class="expanded-section">
                                 <h4>Patient Message</h4>
-                                <p>${r.raw_message || "No message provided"}</p>
+                                <p>${esc(r.raw_message || "No message provided")}</p>
                             </div>
                             <div class="expanded-section">
                                 <h4>Full Recommended Action</h4>
-                                <p>${r.recommended_action || "—"}</p>
+                                <p>${esc(r.recommended_action || "—")}</p>
                                 <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-                                    <span style="font-size:12px;color:var(--slate-mid)">📞 ${phone || "No phone"}</span>
-                                    <span style="font-size:12px;color:var(--slate-mid)">📋 Complexity: ${r.complexity || "—"}</span>
+                                    <span style="font-size:12px;color:var(--slate-mid)">📞 ${esc(phone || "No phone")}</span>
+                                    <span style="font-size:12px;color:var(--slate-mid)">📋 Complexity: ${esc(r.complexity || "—")}</span>
                                 </div>
                             </div>
                         </div>
@@ -494,7 +512,7 @@
                         <div class="stat-card cyan"><div class="stat-label">With Intakes</div><div class="stat-value">${new Set((intakes||[]).map(i=>i.patient_id).filter(Boolean)).size}</div><div class="stat-sub">Linked records</div></div>
                     </div>
                     <div class="filters-row">
-                        <input class="search-input" type="text" placeholder="Search patients by name or email…" value="${patientSearch}" oninput="patientSearch=this.value;renderPatients()">
+                        <input class="search-input" type="text" placeholder="Search patients by name or email…" value="${esc(patientSearch)}" oninput="patientSearch=this.value;renderPatients()">
                     </div>
                     ${filtered.length === 0
                         ? `<div class="table-wrap"><div class="empty-state">
@@ -513,15 +531,15 @@
                                        <tr onclick="navigate('patient-record','${p.id}')">
                                            <td>
                                                <div style="display:flex;align-items:center;gap:10px">
-                                                   <div class="patient-avatar" style="width:32px;height:32px;font-size:14px;margin:0">${(p.full_name||"?")[0]}</div>
+                                                   <div class="patient-avatar" style="width:32px;height:32px;font-size:14px;margin:0">${esc((p.full_name||"?")[0])}</div>
                                                    <div>
-                                                       <div style="font-weight:500">${p.full_name}</div>
-                                                       <div style="font-size:11px;color:var(--slate-light)">${p.date_of_birth?"DOB: "+p.date_of_birth:""}</div>
+                                                       <div style="font-weight:500">${esc(p.full_name)}</div>
+                                                       <div style="font-size:11px;color:var(--slate-light)">${p.date_of_birth?"DOB: "+esc(p.date_of_birth):""}</div>
                                                    </div>
                                                </div>
                                            </td>
-                                           <td><div style="font-size:12px">${p.email||"—"}</div><div style="font-size:11px;color:var(--slate-light)">${p.phone||""}</div></td>
-                                           <td><span class="badge ${p.status==="Active"?"badge-active":"badge-inactive"}">${p.status||"Unknown"}</span></td>
+                                           <td><div style="font-size:12px">${esc(p.email||"—")}</div><div style="font-size:11px;color:var(--slate-light)">${esc(p.phone||"")}</div></td>
+                                           <td><span class="badge ${p.status==="Active"?"badge-active":"badge-inactive"}">${esc(p.status||"Unknown")}</span></td>
                                            <td style="font-size:12px;color:var(--slate-light)">${new Date(p.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</td>
                                        </tr>`).join("")}
                                    </tbody>
@@ -552,27 +570,27 @@
                 document.getElementById("content").innerHTML = `
                     <button class="back-btn" onclick="navigate('patients')">← Back to directory</button>
                     <div class="record-header">
-                        <div class="record-avatar">${initials}</div>
+                        <div class="record-avatar">${esc(initials)}</div>
                         <div style="flex:1">
-                            <div class="record-name">${p.full_name}</div>
+                            <div class="record-name">${esc(p.full_name)}</div>
                             <div class="record-meta">
-                                <span>✉ ${p.email||"—"}</span>
-                                <span>📞 ${p.phone||"—"}</span>
-                                <span>📅 DOB: ${p.date_of_birth||"—"}</span>
+                                <span>✉ ${esc(p.email||"—")}</span>
+                                <span>📞 ${esc(p.phone||"—")}</span>
+                                <span>📅 DOB: ${esc(p.date_of_birth||"—")}</span>
                             </div>
                         </div>
-                        <span class="badge ${p.status==="Active"?"badge-active":"badge-inactive"}" style="font-size:13px;padding:6px 14px">${p.status||"Unknown"}</span>
+                        <span class="badge ${p.status==="Active"?"badge-active":"badge-inactive"}" style="font-size:13px;padding:6px 14px">${esc(p.status||"Unknown")}</span>
                     </div>
                     <div class="record-grid">
                         <div>
                             <div class="record-section">
                                 <h3>Patient Info</h3>
-                                <div class="info-row"><span class="info-label">Insurance</span><span class="info-value">${p.insurance_provider||"—"}</span></div>
-                                <div class="info-row"><span class="info-label">Policy #</span><span class="info-value">${p.insurance_number||"—"}</span></div>
-                                <div class="info-row"><span class="info-label">Address</span><span class="info-value">${p.address||"—"}</span></div>
-                                <div class="info-row"><span class="info-label">Emergency Contact</span><span class="info-value">${p.emergency_contact_name||"—"}</span></div>
-                                <div class="info-row"><span class="info-label">Emergency Phone</span><span class="info-value">${p.emergency_contact_phone||"—"}</span></div>
-                                <div class="info-row"><span class="info-label">Gender</span><span class="info-value">${p.gender||"—"}</span></div>
+                                <div class="info-row"><span class="info-label">Insurance</span><span class="info-value">${esc(p.insurance_provider||"—")}</span></div>
+                                <div class="info-row"><span class="info-label">Policy #</span><span class="info-value">${esc(p.insurance_number||"—")}</span></div>
+                                <div class="info-row"><span class="info-label">Address</span><span class="info-value">${esc(p.address||"—")}</span></div>
+                                <div class="info-row"><span class="info-label">Emergency Contact</span><span class="info-value">${esc(p.emergency_contact_name||"—")}</span></div>
+                                <div class="info-row"><span class="info-label">Emergency Phone</span><span class="info-value">${esc(p.emergency_contact_phone||"—")}</span></div>
+                                <div class="info-row"><span class="info-label">Gender</span><span class="info-value">${esc(p.gender||"—")}</span></div>
                             </div>
                             ${records.length > 0 ? `
                             <div class="record-section" style="margin-top:16px">
@@ -580,12 +598,12 @@
                                 ${records.map(r => `
                                 <div style="padding:12px 0;border-bottom:1px solid var(--border)">
                                     <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-                                        <span style="font-size:13px;font-weight:500">${r.ch_treatments?.name||"Visit"}</span>
+                                        <span style="font-size:13px;font-weight:500">${esc(r.ch_treatments?.name||"Visit")}</span>
                                         <span style="font-size:11px;color:var(--slate-light)">${new Date(r.visit_date).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</span>
                                     </div>
-                                    <div style="font-size:12px;color:var(--slate-mid)">${r.ch_practitioners?.full_name||"—"}</div>
-                                    ${r.treatment_notes?`<div style="font-size:12px;color:var(--slate-mid);margin-top:4px">${r.treatment_notes}</div>`:""}
-                                    ${r.progress?`<span class="badge badge-active" style="margin-top:6px;display:inline-flex">${r.progress}</span>`:""}
+                                    <div style="font-size:12px;color:var(--slate-mid)">${esc(r.ch_practitioners?.full_name||"—")}</div>
+                                    ${r.treatment_notes?`<div style="font-size:12px;color:var(--slate-mid);margin-top:4px">${esc(r.treatment_notes)}</div>`:""}
+                                    ${r.progress?`<span class="badge badge-active" style="margin-top:6px;display:inline-flex">${esc(r.progress)}</span>`:""}
                                 </div>`).join("")}
                             </div>` : ""}
                         </div>
@@ -601,9 +619,9 @@
                                             <div class="timeline-dot ${dotClass}"></div>
                                             <div class="timeline-content">
                                                 <div class="timeline-date">${new Date(i.created_at).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
-                                                <div class="timeline-service">${i.service_category||"—"} · ${i.urgency_level==3?"🔴 Urgent":i.urgency_level==2?"🟡 Moderate":"⚪ Routine"}</div>
-                                                <div class="timeline-action">${i.recommended_action||i.raw_message?.substring(0,100)||"—"}</div>
-                                                <span class="badge ${i.status==="New"?"badge-new":i.status==="In Progress"?"badge-progress":"badge-resolved"}" style="margin-top:6px;display:inline-flex">${i.status}</span>
+                                                <div class="timeline-service">${esc(i.service_category||"—")} · ${i.urgency_level==3?"🔴 Urgent":i.urgency_level==2?"🟡 Moderate":"⚪ Routine"}</div>
+                                                <div class="timeline-action">${esc(i.recommended_action||i.raw_message?.substring(0,100)||"—")}</div>
+                                                <span class="badge ${i.status==="New"?"badge-new":i.status==="In Progress"?"badge-progress":"badge-resolved"}" style="margin-top:6px;display:inline-flex">${esc(i.status)}</span>
                                             </div>
                                         </div>`;
                                     }).join("")}
@@ -635,11 +653,11 @@
                                 const initials = p.full_name.split(" ").map(n=>n[0]).join("").substring(0,2);
                                 return `
                                 <div class="practitioner-card">
-                                    <div class="practitioner-avatar">${initials}</div>
-                                    <div class="practitioner-name">${p.full_name}</div>
-                                    <div class="practitioner-role">${p.role}</div>
-                                    ${p.email?`<div class="practitioner-bio" style="margin-bottom:4px">✉ ${p.email}</div>`:""}
-                                    ${p.bio?`<div class="practitioner-bio">${p.bio}</div>`:""}
+                                    <div class="practitioner-avatar">${esc(initials)}</div>
+                                    <div class="practitioner-name">${esc(p.full_name)}</div>
+                                    <div class="practitioner-role">${esc(p.role)}</div>
+                                    ${p.email?`<div class="practitioner-bio" style="margin-bottom:4px">✉ ${esc(p.email)}</div>`:""}
+                                    ${p.bio?`<div class="practitioner-bio">${esc(p.bio)}</div>`:""}
                                 </div>`;
                             }).join("")}
                         </div>
@@ -666,8 +684,8 @@
                             <tbody>
                                 ${treats.map(t => `
                                 <tr>
-                                    <td style="font-weight:500">${t.name}</td>
-                                    <td><span class="badge badge-new">${t.service_category}</span></td>
+                                    <td style="font-weight:500">${esc(t.name)}</td>
+                                    <td><span class="badge badge-new">${esc(t.service_category)}</span></td>
                                     <td style="font-size:12px;color:var(--slate-mid)">${t.duration_minutes} min</td>
                                     <td style="font-size:13px;font-weight:500">$${t.price}</td>
                                 </tr>`).join("")}
