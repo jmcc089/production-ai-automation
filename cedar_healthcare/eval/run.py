@@ -112,15 +112,25 @@ Your job is to read a patient's free-text intake message and return a structured
 SERVICE CATEGORY
 {block}
 
+Classify on the condition the patient describes, not on the service they ask for. If they request a treatment this clinic does not offer but describe a condition that maps to a listed service, use that listed service. Use the non-service category only when the condition itself maps to none of them, or when it maps to more than one and the message gives no way to choose.
+
 URGENCY LEVEL
 - 3 (Acute) - patient describes active pain, inability to work or perform normal daily function, injury that just happened, or explicitly requests same-day/emergency appointment
 - 2 (Ongoing) - recurring issue, worsening condition, injury past the acute phase, follow-up on existing treatment, condition affecting quality of life but not immediately disabling
 - 1 (General) - information request, first-time enquiry with no urgency signal, exploring options, scheduling a routine appointment
 
+Level 2 requires at least one of: the condition is getting worse, it stops the patient doing something they need to do, a clinician has already flagged it, or the message reports a warning sign. Warning signs count even when the patient is otherwise functioning normally, and include unexplained weight loss, pain that wakes them at night, numbness, weakness, or a fall.
+
+A patient who describes a symptom but has none of the above, is functioning normally, and wants maintenance, performance or general wellbeing is level 1 even though a symptom is present.
+
+The patient's own view of how urgent it is never lowers the level. Treat "nothing urgent", "probably nothing", "no rush" and "I don't want to make a fuss" as absent - they are not clinical evidence. Symptoms this clinic cannot treat are still scored for urgency.
+
 COMPLEXITY
 - "high" - multiple symptoms, long duration (3+ weeks), prior treatment that failed, post-surgical, or multiple services potentially involved
 - "medium" - single clear issue, moderate duration (1-3 weeks), or some relevant history
 - "low" - new simple enquiry, no prior treatment mentioned, single straightforward concern
+
+Complexity describes how much history the case carries, not how urgent it is. Score it independently of the urgency level.
 
 RECOMMENDED ACTION
 Write a plain English instruction for a non-medical receptionist. Be specific and actionable. Include the urgency reason. Maximum 2 sentences.
@@ -141,11 +151,19 @@ Patient message:
 {message}"""
 
 
+# Matches the workflow's Deepseek API node. Sending no temperature at all — which is what
+# the workflow did until 2026-08-06 — measured 10/20 cases unstable across 5 runs; at 0 the
+# same prompt measured 6/20. Override with --temp N to reproduce that.
+TEMPERATURE = 0
+
+
 def classify(catalog, message):
     """Call the model, then apply the workflow's own validation. Returns (result, gate)."""
-    body = post("https://api.deepseek.com/chat/completions",
-                {"model": "deepseek-v4-flash",
-                 "messages": [{"role": "user", "content": build_prompt(catalog, message)}]},
+    payload = {"model": "deepseek-v4-flash",
+               "messages": [{"role": "user", "content": build_prompt(catalog, message)}]}
+    if TEMPERATURE is not None:
+        payload["temperature"] = TEMPERATURE
+    body = post("https://api.deepseek.com/chat/completions", payload,
                 {"Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]})
     txt = body["choices"][0]["message"]["content"]
     cleaned = re.sub(r"```(json)?", "", txt).strip()
@@ -175,6 +193,11 @@ def classify(catalog, message):
         degraded.append("confidence_flag -> true")
         ai["confidence_flag"] = True
     if degraded:
+        ai["confidence_flag"] = True
+    # A case nobody can be assigned to always needs review. Enforced here rather than
+    # asked for in the prompt: the model was flipping this flag between runs on the same
+    # input, and a rule the code applies cannot flip.
+    if ai["service_category"] == fallback:
         ai["confidence_flag"] = True
     ai["needs_review"] = ai.pop("confidence_flag")
     return ai, ("degraded: " + "; ".join(degraded) if degraded else "clean")
@@ -222,9 +245,11 @@ def main():
     if "--check-catalog" in sys.argv:
         return check_catalog(catalog)
 
+
     spec = json.loads((HERE / "cases.json").read_text())
     cases = spec["cases"]
 
+    global TEMPERATURE
     repeat, positional, skip = 1, [], False
     for i, a in enumerate(sys.argv[1:]):
         if skip:
@@ -236,6 +261,12 @@ def main():
             else:
                 repeat = int(sys.argv[i + 2])
                 skip = True
+        elif a.startswith("--temp"):
+            if "=" in a:
+                TEMPERATURE = float(a.split("=", 1)[1])
+            else:
+                TEMPERATURE = float(sys.argv[i + 2])
+                skip = True
         elif not a.startswith("-"):
             positional.append(a)
 
@@ -243,8 +274,9 @@ def main():
         cases = [c for c in cases if positional[0] in c["id"]]
         if not cases:
             sys.exit(f"No case id contains {positional[0]!r}")
+    temp_note = "default (no temperature sent)" if TEMPERATURE is None else TEMPERATURE
     print(f"catalog: {', '.join(s['name'] for s in catalog)}")
-    print(f"running {len(cases)} case(s) against deepseek-v4-flash\n")
+    print(f"running {len(cases)} case(s) x{repeat} against deepseek-v4-flash, temperature={temp_note}\n")
 
     def run_once(c):
         try:
