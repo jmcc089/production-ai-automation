@@ -104,7 +104,10 @@ The build this repository documents most thoroughly.
 - [`cedar_healthcare/INCIDENTS.md`](cedar_healthcare/INCIDENTS.md) — two write-ups, including a
   routing failure that ran in production for two weeks and the regression its fix caused.
 - [`cedar_healthcare/SECURITY.md`](cedar_healthcare/SECURITY.md) — what is reachable without
-  credentials, what refuses it, and five open gaps with the cost of closing each.
+  credentials, what refuses it, and the open gaps with the cost of closing each.
+- [`cedar_healthcare/ADVERSARIAL.md`](cedar_healthcare/ADVERSARIAL.md) — what the intake endpoint does
+  when sent empty, malformed, oversized, non-English or hostile input. Every row was fired at
+  production; the ones that behaved wrongly say so.
 
 ---
 

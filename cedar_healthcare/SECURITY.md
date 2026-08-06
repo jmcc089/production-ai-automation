@@ -120,6 +120,37 @@ that makes lost work replayable. Anyone with access to the n8n instance therefor
 to patient data, not merely a log of it. Closing it: strip both fields in the first node, and set an
 execution retention window. Under an hour.
 
+**n8n execution history stores the `service_role` key in plaintext.** Found 2026-08-06 while reading
+failed executions. The Supabase HTTP nodes send the key in two headers, `apikey` and `Authorization`.
+When a node errors, n8n saves the request context into the execution record and redacts
+`authorization` to `**hidden**` — but **not** `apikey`, which carries the same token. Any failed
+execution therefore contains a readable `service_role` JWT, and that key bypasses RLS entirely: it
+reads and writes every patient, intake and clinical record in the project. At least three executions
+from 2026-08-06 hold it, and n8n has no retention window configured, so they persist.
+
+The exposure is bounded by access to the n8n instance, which is not public — but the whole point of
+`service_role` is that it is the one credential that makes every other control here irrelevant.
+Closing it: rotate the key in Supabase and update the Railway variable, delete the affected
+executions, and set an execution retention window. Rotation is the owner's to do. Sending the key
+only in `Authorization` would stop future executions from recording it, but PostgREST wants `apikey`,
+so the durable fix is retention plus rotation, not header surgery.
+
+**The practitioner alert email interpolates patient-supplied text into HTML unescaped.**
+`Build Practitioner Email` places `full_name` and `raw_message` directly into the message body. Mail
+clients do not execute scripts, so this is not code execution — but an attacker-supplied `<a href>`
+renders as a clickable link inside a Cedar-branded email to a clinician, which is a working phishing
+primitive against the exact person the system is trying to alert. The dashboard had the same defect
+and it was worse there; see below. Closing it: the same escape helper, applied in the workflow node.
+
+**Fixed 2026-08-06 — stored cross-site scripting in the dashboard.** Recorded here rather than
+removed, because it was reachable by anyone with no credentials at all and it is the sharpest example
+of why the unauthenticated webhook above matters. A patient name containing
+`<img src=x onerror=…>`, posted to the public intake endpoint, was stored verbatim and then
+interpolated into `innerHTML` by the dashboard, executing in a signed-in practitioner's browser —
+the session that RLS grants clinical access to. Commit `47dfe53` applies an `esc()` helper at all 41
+interpolations of database values; verified against the live site afterwards. Full chain and
+verification in [ADVERSARIAL.md](ADVERSARIAL.md).
+
 **Leaked-password protection is disabled** on Supabase Auth, so a practitioner may set a password
 known to be compromised. It is a toggle in the dashboard: minutes.
 
