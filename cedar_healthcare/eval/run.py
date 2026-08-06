@@ -11,6 +11,7 @@ which is the part that can be *wrong* rather than merely *fail*.
     python3 run.py                  # all cases, one run each
     python3 run.py physio           # only cases whose id contains "physio"
     python3 run.py --repeat 5       # five runs per case, reporting which answers vary
+    python3 run.py --set holdout    # run cases_holdout.json instead of cases.json
     python3 run.py --check-catalog  # compare catalog.json against the live ch_services table
 
 A single green run says the answers were acceptable once. It says nothing about whether the
@@ -116,10 +117,12 @@ Classify on the condition the patient describes, not on the service they ask for
 
 URGENCY LEVEL
 - 3 (Acute) - patient describes active pain, inability to work or perform normal daily function, injury that just happened, or explicitly requests same-day/emergency appointment
+
+A problem the patient has had for more than about two weeks is not level 3 unless it has suddenly got worse, or they ask to be seen same-day, or they report an emergency symptom. Long-standing pain that is bad by the end of the day is level 2.
 - 2 (Ongoing) - recurring issue, worsening condition, injury past the acute phase, follow-up on existing treatment, condition affecting quality of life but not immediately disabling
 - 1 (General) - information request, first-time enquiry with no urgency signal, exploring options, scheduling a routine appointment
 
-Level 2 requires at least one of: the condition is getting worse, it stops the patient doing something they need to do, a clinician has already flagged it, or the message reports a warning sign. Warning signs count even when the patient is otherwise functioning normally, and include unexplained weight loss, pain that wakes them at night, numbness, weakness, or a fall.
+Level 2 requires at least one of: the condition is getting worse, it stops the patient doing something they need to do, a clinician has already flagged it, or the message reports a warning sign. A clinician having flagged it is sufficient on its own: any doctor, GP, surgeon or other clinician who has noticed the problem, referred the patient here, or told them to get it looked at makes the case level 2, even when the patient reports no pain, no impairment and no concern of their own. Warning signs count even when the patient is otherwise functioning normally, and include unexplained weight loss, pain that wakes them at night, numbness, weakness, or a fall.
 
 A patient who describes a symptom but has none of the above, is functioning normally, and wants maintenance, performance or general wellbeing is level 1 even though a symptom is present.
 
@@ -133,7 +136,7 @@ COMPLEXITY
 Complexity describes how much history the case carries, not how urgent it is. Score it independently of the urgency level.
 
 RECOMMENDED ACTION
-Write a plain English instruction for a non-medical receptionist. Be specific and actionable. Include the urgency reason. Maximum 2 sentences.
+Write a plain English instruction for a non-medical receptionist. Be specific and actionable. Include the urgency reason. Write one sentence, or two at the most - never three, even when the case is complicated.
 
 CONFIDENCE FLAG
 Set to true if the message is too vague to classify reliably.
@@ -246,11 +249,8 @@ def main():
         return check_catalog(catalog)
 
 
-    spec = json.loads((HERE / "cases.json").read_text())
-    cases = spec["cases"]
-
     global TEMPERATURE
-    repeat, positional, skip = 1, [], False
+    repeat, positional, skip, which = 1, [], False, "cases"
     for i, a in enumerate(sys.argv[1:]):
         if skip:
             skip = False
@@ -267,8 +267,20 @@ def main():
             else:
                 TEMPERATURE = float(sys.argv[i + 2])
                 skip = True
+        elif a.startswith("--set"):
+            if "=" in a:
+                which = a.split("=", 1)[1]
+            else:
+                which = sys.argv[i + 2]
+                skip = True
         elif not a.startswith("-"):
             positional.append(a)
+
+    f = HERE / ("cases.json" if which == "cases" else f"cases_{which}.json")
+    if not f.exists():
+        sys.exit(f"No such case file: {f.name}")
+    spec = json.loads(f.read_text())
+    cases = spec["cases"]
 
     if positional:
         cases = [c for c in cases if positional[0] in c["id"]]
@@ -276,6 +288,7 @@ def main():
             sys.exit(f"No case id contains {positional[0]!r}")
     temp_note = "default (no temperature sent)" if TEMPERATURE is None else TEMPERATURE
     print(f"catalog: {', '.join(s['name'] for s in catalog)}")
+    print(f"set:     {f.name}")
     print(f"running {len(cases)} case(s) x{repeat} against deepseek-v4-flash, temperature={temp_note}\n")
 
     def run_once(c):
