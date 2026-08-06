@@ -5,3 +5,8 @@ npm-debug.log*
 .env.local
 .claude/
 CLAUDE.md
+
+# eval credentials — never committed
+cedar_healthcare/eval/.env
+__pycache__/
+*.pyc
