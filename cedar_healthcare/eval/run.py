@@ -36,10 +36,17 @@ is duplicated, and a change to the node that is not mirrored here will make this
 while production behaves differently.
 """
 
-import json, os, re, sys, urllib.request, urllib.error, pathlib, concurrent.futures
+import json, os, re, sys, time, urllib.request, urllib.error, pathlib, concurrent.futures
 
 HERE = pathlib.Path(__file__).parent
 GREETINGS = ("hi ", "hi,", "hello", "dear ", "good morning", "good afternoon")
+
+MODEL = "deepseek-v4-flash"
+
+# One entry per model call: latency and token usage. Appended from worker threads;
+# list.append is atomic under CPython so no lock is needed. Used for the cost and
+# latency report, which is item 11 of the assurance pass.
+SAMPLES = []
 
 
 def load_env():
@@ -162,12 +169,23 @@ TEMPERATURE = 0
 
 def classify(catalog, message):
     """Call the model, then apply the workflow's own validation. Returns (result, gate)."""
-    payload = {"model": "deepseek-v4-flash",
+    payload = {"model": MODEL,
                "messages": [{"role": "user", "content": build_prompt(catalog, message)}]}
     if TEMPERATURE is not None:
         payload["temperature"] = TEMPERATURE
+    t0 = time.monotonic()
     body = post("https://api.deepseek.com/chat/completions", payload,
                 {"Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]})
+    u = body.get("usage") or {}
+    SAMPLES.append({
+        "model": body.get("model", MODEL),
+        "latency_ms": round((time.monotonic() - t0) * 1000),
+        "prompt_tokens": u.get("prompt_tokens", 0),
+        "completion_tokens": u.get("completion_tokens", 0),
+        "cache_hit_tokens": u.get("prompt_cache_hit_tokens", 0),
+        "cache_miss_tokens": u.get("prompt_cache_miss_tokens", u.get("prompt_tokens", 0)),
+        "reasoning_tokens": (u.get("completion_tokens_details") or {}).get("reasoning_tokens", 0),
+    })
     txt = body["choices"][0]["message"]["content"]
     cleaned = re.sub(r"```(json)?", "", txt).strip()
 
@@ -241,6 +259,61 @@ def check(case, got, catalog):
     return fails
 
 
+# Deepseek list prices, USD per million tokens, read from api-docs.deepseek.com/quick_start/pricing
+# on 2026-08-07. Transcribed, not fetched at run time, so CHECK THE DATE before quoting any
+# figure derived from these. Deepseek's own page carries a warning that it plans to raise
+# prices "with a significant increase expected", so this table has a short shelf life.
+#
+# An earlier version of this table was written from memory and was wrong in three ways:
+# cache-hit was off by a factor of ten, cache-miss and output were both too high, and two of
+# the three models listed did not exist. That is the reason the assurance item this feeds
+# refuses a price quoted without a source.
+PRICES = {
+    #  model                cache hit   cache miss   output
+    "deepseek-v4-flash":   (0.0028,     0.14,        0.28),
+    "deepseek-v4-pro":     (0.003625,   0.435,       0.87),
+}
+PRICES_AS_OF = "2026-08-07"
+
+
+def pct(xs, p):
+    """Nearest-rank percentile. With n samples the p95 is the ceil(0.95n)-th value, so
+    it is only meaningful once n is large enough for that rank to exist distinctly."""
+    if not xs:
+        return None
+    s = sorted(xs)
+    k = max(1, min(len(s), -(-int(p * len(s)) // 1)))
+    return s[int(k) - 1]
+
+
+def report_cost_and_latency():
+    if not SAMPLES:
+        return
+    lat = [s["latency_ms"] for s in SAMPLES]
+    n = len(lat)
+    model = SAMPLES[0]["model"]
+    hit = sum(s["cache_hit_tokens"] for s in SAMPLES)
+    miss = sum(s["cache_miss_tokens"] for s in SAMPLES)
+    out = sum(s["completion_tokens"] for s in SAMPLES)
+    reasoning = sum(s["reasoning_tokens"] for s in SAMPLES)
+
+    print(f"\n--- classifier call: {n} samples, model {model} ---")
+    print(f"latency ms   min {min(lat)}  p50 {pct(lat,0.50)}  p95 {pct(lat,0.95)}  max {max(lat)}")
+    if n < 20:
+        print(f"             n={n} is too small for a p95; treat it as the slowest of {n}")
+    print(f"tokens/run   prompt {round((hit+miss)/n)} (cache hit {round(hit/n)}), "
+          f"output {round(out/n)} (of which reasoning {round(reasoning/n)})")
+
+    price = PRICES.get(model.split(":")[0])
+    if not price:
+        print(f"cost         no list price recorded for {model!r}; see PRICES in this file")
+        return
+    ph, pm, po = price
+    usd = (hit / 1e6) * ph + (miss / 1e6) * pm + (out / 1e6) * po
+    print(f"cost         ${usd/n*1000:.4f} per 1000 classifications "
+          f"(${usd:.6f} for these {n}) at {PRICES_AS_OF} list prices")
+
+
 def main():
     load_env()
     catalog = fetch_catalog()
@@ -266,6 +339,13 @@ def main():
                 TEMPERATURE = float(a.split("=", 1)[1])
             else:
                 TEMPERATURE = float(sys.argv[i + 2])
+                skip = True
+        elif a.startswith("--model"):
+            global MODEL
+            if "=" in a:
+                MODEL = a.split("=", 1)[1]
+            else:
+                MODEL = sys.argv[i + 2]
                 skip = True
         elif a.startswith("--set"):
             if "=" in a:
@@ -333,6 +413,8 @@ def main():
             print(f"           gate: {gate}")
         for f in dict.fromkeys(fails):
             print(f"           - {f}")
+
+    report_cost_and_latency()
 
     total = len(results)
     print(f"\n{passed}/{total} passed, {total - passed} failed")
