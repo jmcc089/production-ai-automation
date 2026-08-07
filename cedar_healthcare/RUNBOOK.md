@@ -6,6 +6,7 @@ write-up; this file is only what to type when something needs doing.
 | Piece | Where | Identifier |
 |---|---|---|
 | Workflow | n8n on Railway | `Cedar Healthcare - Intake Triage`, id `lj0aSfymkMyVOBRZ` |
+| Failure recorder | same workflow | an Error Trigger chain on the same canvas; the workflow is its own *Error Workflow* |
 | Entry point | Railway | `POST https://n8n-production-3503.up.railway.app/webhook/cedar-intake` |
 | Database | Supabase | project `mjfvjogsknnuizsoygpp`, tables prefixed `ch_` |
 | Staff dashboard | Netlify | `cedarhealthcare-app` |
@@ -148,6 +149,11 @@ position, and this is load-bearing in two places:
   and broke two things at once: the webhook began returning `{}` because the log node became the
   last executed node, and the start row was written after the run finished, producing a negative
   duration and defeating the only reason that node exists.
+
+The Error Trigger chain at the bottom of the canvas is a **separate trigger** and does not take part
+in that ordering — it runs as its own execution when the webhook chain fails. Its recording node
+carries `On Error → Continue`, and that is not decorative: the workflow is its own Error Workflow, so
+a recording node that could fail would re-trigger the workflow against itself.
 
 If you drag a node in this workflow, re-run the health check and confirm the response body is still
 `{"status":"accepted"}`. That string is the cheapest possible test that branch order is intact.
