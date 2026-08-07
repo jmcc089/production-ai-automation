@@ -50,12 +50,40 @@ happens, which looks identical to a silent failure. The `$(date +%s)` above avoi
 
 Work down this list. It is ordered by how often each has actually been the cause.
 
-**1. n8n execution list** — `n8n → Cedar Healthcare - Intake Triage → Executions`.
-The failing node is highlighted and its input/output are inspectable. Full request bodies are
-retained, so a lost submission can be replayed by hand. This is the single most useful place and
-almost always answers it.
+**1. `ch_workflow_runs` in Supabase** — the durable record, and the place to start because it
+survives things n8n does not.
 
-**2. Which node failed tells you where to go next.**
+```sql
+select started_at, status, stage, duration_ms, error_node, error_message,
+       service_category, urgency_level, total_tokens, source_event_id
+from ch_workflow_runs
+where not reconstructed
+order by started_at desc
+limit 20;
+```
+
+Read it like this:
+
+| What you see | What it means |
+|---|---|
+| `ok` / `complete` | ran end to end; `intake_id` points at the row |
+| `ok` / `deduplicated` | a repeat delivery. No new row, no emails. Correct, not a fault |
+| `error` | `error_node` is where it died, `error_message` carries the underlying cause |
+| **`started`, minutes old, never advanced** | the run was killed mid-flight — n8n restarted, the container was redeployed, or the process died. There will be no n8n execution to look at |
+| nothing at all for a submission you know was sent | it never reached n8n. Check the Railway service is up and the Tally webhook URL is right |
+
+Rows with `reconstructed = true` were backfilled from `ch_intake_requests` after the fact. They carry
+no duration, no tokens and no errors, and only exist for runs that succeeded. Ignore them when
+diagnosing.
+
+**2. n8n execution list** — `n8n → Cedar Healthcare - Intake Triage → Executions`.
+The failing node is highlighted and its input/output are inspectable, and full request bodies are
+retained, so a lost submission can be replayed by hand. Richer than the table above — but it is the
+orchestrator's own storage, it can be cleared, and **it was cleared once on 2026-08-06**, which is
+why it is no longer step 1. Failed executions also store the `service_role` key in plaintext in the
+saved request headers; see `SECURITY.md` before sharing a screenshot of one.
+
+**3. Which node failed tells you where to go next.**
 
 | Failing node | Usual cause | Check |
 |---|---|---|
@@ -65,7 +93,7 @@ almost always answers it.
 | `Fetch Services` | `ch_services` unreachable or empty | `select * from ch_services` — must return ≥1 row |
 | `Patient Confirmation` / `Notify Practitioner` | Resend rejected the send | Resend dashboard → Logs |
 
-**3. Constraint violations** are deliberate and mean the data was wrong, not the database.
+**4. Constraint violations** are deliberate and mean the data was wrong, not the database.
 
 | Code | Meaning |
 |---|---|
@@ -74,11 +102,11 @@ almost always answers it.
 | `23505` | duplicate patient email, or a `source_event_id` already processed |
 | `23502` | intake with no `patient_id` |
 
-**4. Dashboard shows nothing** — almost always RLS, not the data. Confirm the signed-in user has a
+**5. Dashboard shows nothing** — almost always RLS, not the data. Confirm the signed-in user has a
 row: `select full_name, auth_user_id from ch_practitioners where auth_user_id = '<uid>'`. Cases are
 visible to their assigned practitioner and to everyone while unassigned.
 
-**5. Netlify** — `Deploys` tab. The build substitutes `__SUPABASE_URL__` and `__SUPABASE_KEY__` from
+**6. Netlify** — `Deploys` tab. The build substitutes `__SUPABASE_URL__` and `__SUPABASE_KEY__` from
 environment variables; if the page loads but no data appears and RLS is fine, view source and check
 those placeholders were actually replaced.
 
@@ -111,8 +139,18 @@ for real while nothing is written or emailed. This is how the contract validatio
 version. After editing, publish, then confirm `activeVersionId` equals `versionId`.
 
 **Branch order is canvas position.** `executionOrder: v1` runs branches top to bottom by vertical
-position. The `Ack` node sits below both email branches on purpose, so it executes last and the
-webhook always has something to return. Moving it up will make duplicate deliveries answer 500.
+position, and this is load-bearing in two places:
+
+- `Ack` sits **below** both email branches and `Log Run OK`, so it executes last and the webhook
+  always has `{"status":"accepted"}` to return. Move it up and duplicate deliveries answer 500.
+- `Log Run Start` sits **above** `Fetch Services`, so the `started` row is written before the model
+  call and before any write. Placed below it, it runs last instead — which happened on 2026-08-06
+  and broke two things at once: the webhook began returning `{}` because the log node became the
+  last executed node, and the start row was written after the run finished, producing a negative
+  duration and defeating the only reason that node exists.
+
+If you drag a node in this workflow, re-run the health check and confirm the response body is still
+`{"status":"accepted"}`. That string is the cheapest possible test that branch order is intact.
 
 ---
 
