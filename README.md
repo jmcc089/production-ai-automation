@@ -21,7 +21,7 @@ the code and the operational documentation; it is not the write-up.
 
 ## What you need before anything runs
 
-Nothing here works standalone — every build depends on four external services. There is no
+Nothing here works standalone — every build depends on the six external services below. There is no
 docker-compose that brings the world up locally, and pretending otherwise would waste your first
 hour.
 
@@ -39,10 +39,11 @@ hour.
 ## Running a dashboard locally
 
 The dashboards are single-file HTML with no framework and no bundler. The "build" is two string
-substitutions.
+substitutions. There are **four** front ends: `cedar_healthcare/app`, `holt_vargas/app`,
+`brasa_commerce/app` (the agent dashboard) and `brasa_commerce/web` (the public storefront).
 
 ```bash
-cd cedar_healthcare/app
+cd brasa_commerce/app                      # or web, or either of the other builds
 export SUPABASE_URL="https://<your-project>.supabase.co"
 export SUPABASE_KEY="<your anon key>"     # anon, never service_role
 npm run build                              # rewrites index.html in place
@@ -50,13 +51,22 @@ python3 -m http.server 8000                # then open http://localhost:8000
 ```
 
 `npm run build` **modifies `index.html` in place**, replacing `__SUPABASE_URL__` and
-`__SUPABASE_KEY__`. Do not commit the result — `git checkout index.html` afterwards. This is
-deliberate: the repository holds placeholders so no key is ever committed, and Netlify substitutes
-them at deploy time from its own environment variables.
+`__SUPABASE_KEY__`. Do not commit the result — `git checkout index.html` afterwards, **unless you
+have uncommitted edits in that file**, in which case build a copy instead. This is deliberate: the
+repository holds placeholders so no key is ever committed, and Netlify substitutes them at deploy
+time from its own environment variables.
 
-You will see a login screen. Access requires a Supabase Auth user whose id appears in
-`ch_practitioners.auth_user_id`; there is no local bypass, because the row-level security policies
-are the access control and mocking them would test something other than the system.
+> The build script used to be `sed -i "s|…|…|g" index.html`, which is GNU syntax. On macOS BSD sed
+> reads the argument after `-i` as a backup suffix, so it tried to execute `index.html` as the
+> script, failed, and left both placeholders in place. It worked on Netlify and could never have
+> worked locally. All four front ends now use a portable `sed -e … -e … > file && mv` instead.
+
+The agent dashboards show a login screen. Access requires a Supabase Auth user whose id appears in
+the build's own staff table — `ch_practitioners.auth_user_id` for Cedar, `bc_agent.auth_user_id` for
+Brasa. There is no local bypass, because the row-level security policies are the access control and
+mocking them would test something other than the system. **`brasa_commerce/web` needs no login**: it
+is the public storefront and reads only the active product catalog, which is what its anon key is
+allowed to see.
 
 ## Bringing one up from zero
 
@@ -83,10 +93,28 @@ Ordered, and each step is needed by the next.
    not enough, and this has caused a real outage (see `cedar_healthcare/INCIDENTS.md`).
 8. **Tally form.** Point its webhook at `/webhook/cedar-intake`. The four question labels must read
    exactly `Full name`, `Email address`, `Phone number`, `Tell us about your reason for visit` —
-   the workflow matches on label text.
-9. **Netlify.** One project per `app/` directory, with `SUPABASE_URL` and `SUPABASE_KEY` set.
+   the workflow matches on label text. **Brasa's fourth label is `Message`, not that one**, and its
+   webhook is `/webhook/brasa-intake`.
+9. **Netlify.** One project per front-end directory, with `SUPABASE_URL` and `SUPABASE_KEY` set.
+   Brasa needs **two**: `brasa_commerce/app` and `brasa_commerce/web`.
 
-Verify with the health check in `cedar_healthcare/RUNBOOK.md`.
+Verify with the health check in `cedar_healthcare/RUNBOOK.md`, or
+[`brasa_commerce/RUNBOOK.md`](brasa_commerce/RUNBOOK.md) — Brasa's costs no email, so prefer it if
+the Resend daily quota matters to you that day.
+
+**Brasa differs from the sequence above in three places**, and each one will stop you if you follow
+Cedar's steps literally:
+
+- **Three webhooks, not one**: `brasa-intake` (the Tally form), `brasa-checkout` (the storefront) and
+  `brasa-approve` (the agent dashboard). All three live in one workflow.
+- **Step 2 has no equivalent.** Brasa's reference table is `bc_product_catalog`, and the classifier
+  does not degrade to a fallback row — retrieval simply returns nothing and the ticket escalates.
+  Seed `bc_agent` instead, then write its `auth_user_id`.
+- **Two Postgres functions must exist before the workflow runs**: `search_products` and
+  `search_order`. Both are `SECURITY DEFINER`, and `EXECUTE` must be revoked from `PUBLIC` and
+  granted to `service_role` only — Postgres grants `EXECUTE` to `PUBLIC` by default, and leaving it
+  there published real order data to anyone holding the site's public key. See
+  [`brasa_commerce/SECURITY.md`](brasa_commerce/SECURITY.md).
 
 **Not rehearsed end to end.** These steps are reconstructed from the built system and from the
 migration and deployment record, not from a clean-room rebuild. Steps 1–3 and 5 have been verified
@@ -95,9 +123,29 @@ Treat gaps as likely and report them.
 
 ---
 
-## Cedar Healthcare, in more detail
+## Brasa Commerce, in more detail
 
-The build this repository documents most thoroughly.
+The most thoroughly documented build, and the only one with a public write path that takes money-shaped
+input.
+
+- [`brasa_commerce/RUNBOOK.md`](brasa_commerce/RUNBOOK.md) — health check (free: it costs no email and
+  no model call), failure triage ordered by measured frequency, the run-status vocabulary, safe
+  workflow editing, key rotation, restore.
+- [`brasa_commerce/INCIDENTS.md`](brasa_commerce/INCIDENTS.md) — three write-ups, including a build
+  that never delivered a single customer email while every record said it had, and an unauthenticated
+  endpoint that mailed whoever asked.
+- [`brasa_commerce/DECISIONS.md`](brasa_commerce/DECISIONS.md) — what this system must never do, and
+  the construct that enforces each prohibition rather than the prompt that requests it.
+- [`brasa_commerce/SECURITY.md`](brasa_commerce/SECURITY.md) — what is reachable without credentials,
+  what refuses it, and the open gaps with the cost of closing each. Ends with a copy-pasteable script
+  that falsifies its own claims.
+- [`brasa_commerce/ADVERSARIAL.md`](brasa_commerce/ADVERSARIAL.md) — 31 probes across six families,
+  every one fired at production, with before and after.
+- [`brasa_commerce/eval/`](brasa_commerce/eval/) — a frozen 19-case classifier suite (`run.py`, sends
+  nothing and writes nothing), plus `latency.py`, `load.py` and `sender_probe.py`, which all hit
+  production and all cost Resend sends. Read their docstrings before running them.
+
+## Cedar Healthcare, in more detail
 
 - [`cedar_healthcare/RUNBOOK.md`](cedar_healthcare/RUNBOOK.md) — health check, failure triage, stop
   and start, key rotation, adding a service.
