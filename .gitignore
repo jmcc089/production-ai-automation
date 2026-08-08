@@ -10,3 +10,4 @@ CLAUDE.md
 cedar_healthcare/eval/.env
 __pycache__/
 *.pyc
+brasa_commerce/eval/.env

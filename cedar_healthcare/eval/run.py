@@ -169,7 +169,13 @@ TEMPERATURE = 0
 
 def classify(catalog, message):
     """Call the model, then apply the workflow's own validation. Returns (result, gate)."""
-    payload = {"model": MODEL,
+    # Mirrors the cap on the production node, added 2026-08-08. The answer is a small
+    # JSON object; anything approaching this is a runaway, and 514 of the 585 output
+    # tokens an average run spends are reasoning the patient never sees. A truncated
+    # reply degrades to Unknown/urgency-3/needs-review rather than raising.
+    # 2000 was tried first and rejected on evidence: it truncated a legitimate
+    # ambiguous case (19/20), and Cedar's largest real completion on record is 2796.
+    payload = {"model": MODEL, "max_tokens": 3000,
                "messages": [{"role": "user", "content": build_prompt(catalog, message)}]}
     if TEMPERATURE is not None:
         payload["temperature"] = TEMPERATURE
