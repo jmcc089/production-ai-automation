@@ -905,6 +905,15 @@ const Brasa = (() => {
       </div>`);
   }
 
+  // Una compra es un intento, no una petición. Si la respuesta se pierde el
+  // pedido puede haberse creado igual, así que el reintento tiene que llevar la
+  // misma llave: con ella n8n devuelve el pedido que ya existe en vez de crear
+  // otro. Se genera una vez por intento y solo se tira al confirmar.
+  let checkoutKey = null;
+  const newCheckoutKey = () =>
+    (crypto.randomUUID ? crypto.randomUUID()
+                       : 'bc-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+
   async function submitCheckout(ev) {
     ev.preventDefault();
     const btn = $('pay-btn');
@@ -912,9 +921,12 @@ const Brasa = (() => {
     btn.textContent = 'Placing your order…';
     $('checkout-error').innerHTML = '';
 
+    if (!checkoutKey) checkoutKey = newCheckoutKey();
+
     // Solo SKU y cantidad salen del navegador. n8n resuelve los precios contra
     // el catálogo: si mandáramos importes, cualquiera editaría la petición.
     const payload = {
+      idempotency_key: checkoutKey,
       customer: {
         full_name: $('co-name').value.trim(),
         email: $('co-email').value.trim(),
@@ -944,15 +956,23 @@ const Brasa = (() => {
       try { data = await res.json(); } catch {}
       if (!res.ok || !data || !data.order_number) throw new Error('no order number');
 
+      // data.status === 'duplicate' es este mismo intento llegando dos veces:
+      // n8n no creó nada y nos devuelve el pedido que ya estaba. Para el cliente
+      // es el mismo desenlace, y por eso se muestra igual.
       lastOrder = data.order_number;
       cart = {};
       saveCart();
+      checkoutKey = null;   // el intento terminó; el siguiente lleva llave nueva
       showConfirmation(data);
     } catch (err) {
       btn.disabled = false;
       btn.textContent = 'Try again';
+      // checkoutKey se conserva a propósito: el reintento tiene que ser el mismo
+      // intento. No decimos "nothing was charged" porque no lo sabemos — si el
+      // pedido se creó y se perdió la respuesta, sería mentira.
       $('checkout-error').innerHTML =
-        '<div class="form-error">We could not place the order. Please check your details and try again — nothing was charged.</div>';
+        '<div class="form-error">We could not confirm the order. Press Try again — if it did go through, ' +
+        'you will get the same order back instead of a second one.</div>';
     }
   }
 

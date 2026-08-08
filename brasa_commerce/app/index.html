@@ -517,7 +517,10 @@ async function renderDetail(ticket) {
       <div class="customer-block">
         <div class="cust-row"><span>Email</span><span>${esc(c.email || '—')}</span></div>
         <div class="cust-row"><span>Phone</span><span>${esc(c.phone || '—')}</span></div>
-        <div class="cust-row"><span>Total tickets</span><span>${c.total_tickets || 1}</span></div>
+        <!-- Sin `|| 1`: la base mantiene este contador con un trigger desde
+             2026-08-07, así que un 0 es un 0 de verdad. El fallback anterior
+             pintaba "1" para siete clientes que tenían el campo sin mantener. -->
+        <div class="cust-row"><span>Total tickets</span><span>${c.total_tickets ?? '—'}</span></div>
       </div>
 
       <div class="section-label">Customer message</div>
@@ -586,6 +589,19 @@ async function approveTicket(id) {
       })
     });
     if (!res.ok) throw new Error('Webhook returned ' + res.status);
+
+    // Un 200 solo dice que el webhook contestó. Quien sabe si la aprobación se
+    // tomó es el cuerpo: si el ticket ya se había respondido, o no existe, el
+    // workflow no reclama la fila y no manda nada. Cantar éxito ahí es mentir.
+    let data = null;
+    try { data = await res.json(); } catch {}
+    if (!data || data.success !== true) {
+      showToast(data?.message || 'Not approved — nothing was sent', 'warn');
+      await loadTickets();
+      const same = tickets.find(t => t.id === id);
+      if (same) renderDetail(same);
+      return;
+    }
     showToast('Approved — reply sent to customer', 'success');
     await loadTickets();
     const updated = tickets.find(t => t.id === id);
