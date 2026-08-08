@@ -2,6 +2,6 @@
   "name": "brasa-commerce-dashboard",
   "version": "1.0.0",
   "scripts": {
-    "build": "sed -i \"s|__SUPABASE_URL__|$SUPABASE_URL|g\" index.html && sed -i \"s|__SUPABASE_KEY__|$SUPABASE_KEY|g\" index.html"
+    "build": "sed -e \"s|__SUPABASE_URL__|$SUPABASE_URL|g\" -e \"s|__SUPABASE_KEY__|$SUPABASE_KEY|g\" index.html > index.built.html && mv index.built.html index.html"
   }
 }
