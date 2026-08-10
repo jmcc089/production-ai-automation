@@ -5,8 +5,8 @@ project write-up; this file is only what to type when something needs doing.
 
 | Piece | Where | Identifier |
 |---|---|---|
-| Workflow | n8n on Railway | `Holt & Vargas - Document Intake`, id `xurYOv7EzKPumZq0`, 29 nodes |
-| Failure recorder | n8n, separate workflow | `Holt & Vargas - Failure Recorder`, id `ZcVRMF8TacvQ5rQg`, set as this workflow's *Error Workflow* |
+| Workflow | n8n on Railway | `Holt & Vargas - Document Intake`, id `xurYOv7EzKPumZq0`, 32 nodes — the only Holt automation |
+| Failure recorder | same canvas | `Error Trigger` → `Classify Failure` → `Record Failure`, with `settings.errorWorkflow` pointing at this workflow **itself**. The old separate workflow `ZcVRMF8TacvQ5rQg` was folded in and deactivated on 2026-08-10 |
 | Entry point | Railway | `POST https://n8n-production-3503.up.railway.app/webhook/hvl-intake` |
 | Database | Supabase | project `mjfvjogsknnuizsoygpp`, tables prefixed `hvl_` |
 | Model | DeepSeek | `deepseek-v4-flash`, `max_tokens` 5000, timeout 90 s, one retry, fails sideways not fatally |

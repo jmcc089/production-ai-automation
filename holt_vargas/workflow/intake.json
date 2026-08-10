@@ -56,6 +56,17 @@
     ]
    ]
   },
+  "Classify Failure": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Record Failure",
+      "type": "main"
+     }
+    ]
+   ]
+  },
   "Deepseek API": {
    "main": [
     [
@@ -69,6 +80,17 @@
      {
       "index": 0,
       "node": "Parse Deepseek Response",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Error Trigger": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Classify Failure",
       "type": "main"
      }
     ]
@@ -375,7 +397,7 @@
     }
    },
    "position": [
-    -1984,
+    -1808,
     208
    ],
    "type": "n8n-nodes-base.set",
@@ -416,7 +438,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_clients?on_conflict=email"
    },
    "position": [
-    -1232,
+    -768,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -429,7 +451,7 @@
     "jsCode": "const clientRow = $input.first().json;\nconst clientId = Array.isArray(clientRow) ? clientRow[0]?.id : clientRow?.id;\nconst prev = $('Parse Deepseek Response').first().json;\nreturn [{ json: { ...prev, client_id: clientId } }];"
    },
    "position": [
-    -1024,
+    -576,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -470,7 +492,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_cases?on_conflict=client_id,case_type"
    },
    "position": [
-    -416,
+    0,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -483,7 +505,7 @@
     "jsCode": "const caseRow = $input.first().json;\nconst caseId = Array.isArray(caseRow) ? caseRow[0]?.id : caseRow?.id;\nconst prev = $('Extract Client ID').first().json;\nreturn [{ json: { ...prev, case_id: caseId } }];"
    },
    "position": [
-    -224,
+    208,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -524,7 +546,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_document_reviews?on_conflict=source_event_id"
    },
    "position": [
-    -16,
+    416,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -537,7 +559,7 @@
     "jsCode": "const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');\nconst d = $('Parse Deepseek Response').first().json;\nconst fields = $('Set Fields').first().json;\nconst hasScore = d.completeness_score !== null && d.completeness_score !== undefined;\nconst score = hasScore ? d.completeness_score : '—';\nconst basis = d.score_basis ? d.score_basis : (hasScore ? '' : 'no checklist, or no readable answer');\nconst label = d.completeness_label ?? 'Unknown';\nconst present = (d.catalogue_present ?? []).map(x => `<li style='padding:6px 0;border-bottom:1px solid #f0ede6;'><span style='color:#166534'>✅</span> ${esc(x)}</li>`).join('');\nconst missing = (d.catalogue_missing ?? []).map(x => `<li style='padding:6px 0;border-bottom:1px solid #f0ede6;'><span style='color:#991b1b'>❌</span> ${esc(x)}</li>`).join('');\nconst optional = (d.offcatalogue ?? []).map(x => `<li style='padding:6px 0;border-bottom:1px solid #f0ede6;'><span style='color:#92400e'>⚠️</span> ${esc(x)}</li>`).join('');\nconst scoreColor = !hasScore ? '#6b7280' : score >= 75 ? '#166534' : score >= 40 ? '#92400e' : '#991b1b';\nconst labelBg = label === 'Complete' ? '#dcfce7' : label === 'Mostly Complete' ? '#fef9c3' : label === 'Incomplete' ? '#ffedd5' : '#fee2e2';\nconst labelColor = label === 'Complete' ? '#166534' : label === 'Mostly Complete' ? '#92400e' : label === 'Incomplete' ? '#9a3412' : '#991b1b';\n\nconst html = `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>\n<body style=\"margin:0;padding:0;background:#8a7a65;font-family:Georgia,serif;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr><td align=\"center\" style=\"padding:32px 16px;\">\n<table width=\"620\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:620px;\">\n<tr><td style=\"padding-bottom:20px;text-align:center;\">\n<img src=\"https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png\"\n     alt=\"Holt & Vargas Immigration Law\" style=\"max-height:120px;max-width:320px;width:100%;\">\n</td></tr>\n<tr><td style=\"background:#1E3A5F;border-radius:12px 12px 0 0;padding:32px;text-align:center;\">\n<div style=\"display:inline-block;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.5);border-radius:100px;padding:6px 20px;font-size:12px;font-weight:700;color:#C9A84C;letter-spacing:2px;margin-bottom:12px;\">DOCUMENT REVIEW REPORT</div>\n<p style=\"margin:0;font-size:22px;font-weight:bold;color:#fff;\">New Intake: ${esc(fields.full_name)}</p>\n<p style=\"margin:6px 0 0;font-size:14px;color:rgba(255,255,255,0.7);\">${esc(fields.case_type)} · ${esc(fields.email)}</p>\n</td></tr>\n<tr><td style=\"background:#fff;padding:32px;border:1px solid #e5e0d5;border-top:none;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin-bottom:24px;\">\n<tr>\n<td style=\"width:50%;padding:16px;background:#f8f6f0;border-radius:8px;text-align:center;\">\n<p style=\"margin:0 0 4px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;\">Completeness Score</p>\n<p style=\"margin:0;font-size:42px;font-weight:bold;color:${scoreColor};font-family:Arial,sans-serif;\">${score}</p>\n        <p style=\"margin:2px 0 0;font-size:11px;color:#6b7280;\">${esc(basis)}</p>\n<p style=\"margin:0;font-size:12px;color:#6b7280;\">out of 100</p>\n</td>\n<td style=\"width:8px;\"></td>\n<td style=\"width:50%;padding:16px;background:#f8f6f0;border-radius:8px;text-align:center;\">\n<p style=\"margin:0 0 8px;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;\">Status</p>\n<span style=\"background:${labelBg};color:${labelColor};padding:6px 16px;border-radius:100px;font-size:13px;font-weight:bold;\">${esc(label)}</span>\n<p style=\"margin:8px 0 0;font-size:12px;color:#6b7280;\">Confidence: ${esc(d.confidence_level ?? '—')}</p>\n</td>\n</tr>\n</table>\n<h3 style=\"color:#1E3A5F;border-bottom:2px solid #C9A84C;padding-bottom:8px;margin-top:0;\">AI Summary</h3>\n<p style=\"line-height:1.8;color:#444;background:#f8f6f0;padding:16px;border-radius:6px;\">${esc(d.ai_summary ?? '—')}</p>\n${d.ai_notes ? `<div style=\"background:#fef9c3;border-left:4px solid #C9A84C;padding:12px 16px;margin:16px 0;border-radius:0 6px 6px 0;\"><strong style=\"color:#92400e;\">⚠️ Notes:</strong> <span style=\"color:#444;\">${esc(d.ai_notes)}</span></div>` : ''}\n<h3 style=\"color:#1E3A5F;border-bottom:2px solid #C9A84C;padding-bottom:8px;\">Documents Present (${(d.catalogue_present ?? []).length})</h3>\n<ul style=\"list-style:none;padding:0;margin:0;\">${present || '<li style=\"color:#6b7280;padding:8px 0;\">None identified</li>'}</ul>\n<h3 style=\"color:#1E3A5F;border-bottom:2px solid #C9A84C;padding-bottom:8px;margin-top:24px;\">Documents Missing (${(d.catalogue_missing ?? []).length})</h3>\n<ul style=\"list-style:none;padding:0;margin:0;\">${missing || '<li style=\"color:#166534;padding:8px 0;\">✅ No missing documents — package appears complete</li>'}</ul>\n${optional ? `<h3 style=\"color:#1E3A5F;border-bottom:2px solid #C9A84C;padding-bottom:8px;margin-top:24px;\">Raised by the assistant, outside the firm checklist (not sent to the client)</h3><ul style=\"list-style:none;padding:0;margin:0;\">${optional}</ul>` : ''}\n${d.priority_flag ? `<div style=\"background:#fee2e2;border:2px solid #991b1b;border-radius:8px;padding:16px;margin-top:24px;text-align:center;\"><strong style=\"color:#991b1b;font-size:15px;\">🚨 PRIORITY FLAG — IMMEDIATE REVIEW REQUIRED</strong></div>` : ''}\n</td></tr>\n<tr><td style=\"background:#1E3A5F;border-radius:0 0 12px 12px;padding:20px;text-align:center;\">\n<p style=\"margin:0;font-size:12px;color:rgba(255,255,255,0.5);\">Automated intake report · Full case management in Docketwise/Clio · Holt & Vargas Immigration Law</p>\n</td></tr>\n</table></td></tr></table>\n</body></html>`;\n\nreturn [{ json: {\n  to: 'mcruzcardoza@gmail.com',\n  from: 'Holt & Vargas Immigration Law <intake@mail.mcruz-portfolio.space>',\n  subject: (d.priority_flag ? '🚨 PRIORITY — ' : '') + 'New H&V Intake: ' + fields.full_name + ' (' + fields.case_type + ') — ' + (d.completeness_label ?? 'Review Required'),\n  html_email: html,\n  ...d,\n  ...fields\n} }];"
    },
    "position": [
-    208,
+    624,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -570,7 +592,7 @@
     "url": "https://api.resend.com/emails"
    },
    "position": [
-    432,
+    832,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -585,7 +607,7 @@
     "responseBody": "={{ (function(p){ return JSON.stringify(p.review_ran ? { success: true, message: 'Intake received and processed', client: $('Set Fields').first().json.full_name, case_type: $('Set Fields').first().json.case_type } : { success: true, status: 'accepted_unreviewed', message: p.nothing_to_review ? 'Intake received and recorded. No documents were described, so nothing was reviewed and the client has been asked what they hold.' : 'Intake received and recorded. The automated document review did not run and a paralegal will review this by hand.', client: $('Set Fields').first().json.full_name, case_type: $('Set Fields').first().json.case_type }); })($('Parse Deepseek Response').first().json) }}"
    },
    "position": [
-    1216,
+    1584,
     208
    ],
    "type": "n8n-nodes-base.respondToWebhook",
@@ -598,7 +620,7 @@
     "jsCode": "// Single source of truth for the firm's checklist. The prompt is generated from it and\n// Parse validates the model's answer against it, so prompt and validation cannot drift apart.\n// Keys are exactly the values hvl_cases_case_type_check accepts.\nconst CATALOGUE = {\n  'Family Visa': [\n    'Petition I-130','Proof of US Petitioner Status','Proof of Relationship','Beneficiary passport',\n    'I-864 Affidavit of Support','DS-260 form','Medical exam I-693','Police clearance certificates',\n    'Birth certificates for dependents'],\n  'Employment-Based Green Card': [\n    'I-140 approval notice','Priority Date confirmation','I-485 application',\n    'Employment verification letter','Educational credentials','Professional certifications',\n    'I-864 Affidavit of Support','Medical exam I-693','Tax returns last 3 years',\n    'Passport copies all pages'],\n  'Asylum': [\n    'I-589 application','Personal statement detailed','Country condition evidence',\n    'Police/medical/human rights reports','Identity documents','Evidence of persecution',\n    'Witness statements if available','Photos of harm','Attorney G-28 form',\n    'Translations of non-English documents'],\n  'Naturalization': [\n    'I-751 if applicable','Green card copy both sides','Passport photos x2',\n    'Tax returns last 5 years','N-400 application','Travel history documentation',\n    'Selective Service proof','Criminal history disclosure','Employment history last 5 years'],\n  'Other': []\n};\n\nconst fields   = $('Set Fields').first().json;\nconst caseType = fields.case_type;\nconst docDesc  = fields.document_description;\nconst checklist = CATALOGUE[caseType] || [];\n\nconst catalogueText = Object.keys(CATALOGUE)\n  .filter(k => CATALOGUE[k].length > 0)\n  .map(k => k.toUpperCase() + ': ' + CATALOGUE[k].join(', '))\n  .join('\\n');\n\nconst prompt = `You are a paralegal assistant for an immigration law firm. Analyze document completeness for immigration cases.\nCASE TYPE: ${caseType}\nCLIENT DESCRIPTION:\n${docDesc}\nRequired documents by case type:\n${catalogueText}\nUse the document names exactly as written in the list above. Do not invent, rename, merge or qualify them.\nLANGUAGE\nReturn TWO language fields, and do not conflate them.\n\"detected_language\": the language the client actually wrote CLIENT DESCRIPTION in, named in English. If it is neither Spanish nor English, say so plainly - for example \"Japanese\", \"Portuguese\", \"Haitian Creole\". Never substitute a language the firm supports for the one you actually read.\n\"preferred_language\": the language the firm will reply in. Exactly \"Spanish\" or \"English\". If detected_language is neither, return \"English\".\nRespond ONLY with valid JSON, no markdown, no preamble:\n{\n  \"completeness_score\": <integer from 0 to 100, a whole number. 100 means every required document is present. Never a fraction, never a ratio, never a decimal>,\n  \"completeness_label\": \"Complete|Mostly Complete|Incomplete|Critically Incomplete\",\n  \"documents_present\": [],\n  \"documents_missing\": [],\n  \"documents_optional\": [],\n  \"ai_summary\": \"2-3 sentence summary\",\n  \"ai_notes\": \"flags or empty string\",\n  \"priority_flag\": false,\n  \"confidence_level\": \"High|Medium|Low\",\n  \"detected_language\": \"<the language the client actually wrote in, in English>\",\n  \"preferred_language\": \"Spanish|English\"\n}`;\n\nreturn [{ json: { deepseek_body: prompt, checklist: checklist, case_type: caseType } }];\n"
    },
    "position": [
-    -1808,
+    -1632,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -629,7 +651,7 @@
     "url": "https://api.deepseek.com/chat/completions"
    },
    "position": [
-    -1632,
+    -1248,
     208
    ],
    "retryOnFail": true,
@@ -644,7 +666,7 @@
     "jsCode": "// Deterministic boundary. Below this line the rules are ours, not the model's.\nconst ALLOWED_LABEL = ['Complete','Mostly Complete','Incomplete','Critically Incomplete'];\nconst ALLOWED_CONF  = ['High','Medium','Low'];\nconst ALLOWED_LANG  = ['Spanish','English'];\n\nconst raw  = $input.first().json;\nconst text = raw?.choices?.[0]?.message?.content ?? '';\nconst fields = $('Set Fields').first().json;\nconst violations = [];\n\n// A form submitted with no description is not a client with no documents — it is a client\n// who told us nothing. Scoring it 0 and mailing them the entire checklist is a verdict the\n// system invented, the same error as marking a document present because the model inferred\n// it. IF Has Description routes these past the model entirely; this flag is checked here as\n// well so that a mis-routed run still refuses to invent an answer.\nconst nothingToReview = String(fields.document_description || '').trim().length === 0;\n\n// The Deepseek API node continues on error into this node rather than throwing, because a\n// run that throws here dies three nodes before Respond to Webhook and n8n closes the\n// still-open request with a bare 200 — the caller is told nothing is wrong and the intake\n// is lost. Measured 2026-08-09: a timed-out model call returned exactly that.\n//\n// A real completion always carries `choices`. Anything without it is the error output, and\n// saying \"not valid JSON\" about it would be true and useless: the model never answered.\nconst callFailed = !raw || !Array.isArray(raw.choices);\nconst callError = callFailed\n  ? String(raw?.error?.message || raw?.error || raw?.message || 'no response').slice(0, 300)\n  : '';\n\nlet parsed = {};\nlet unparseable = false;\nif (callFailed) {\n  unparseable = true;\n  // Only a violation when a call was actually attempted. The no-description branch also\n  // arrives here without `choices`, and there the absence of a completion is the intended\n  // outcome rather than a breach.\n  if (!nothingToReview) violations.push('the model call did not return a completion: ' + callError);\n} else {\n  try {\n    const clean = String(text).replace(/```json/gi, '').replace(/```/g, '').trim();\n    const p = JSON.parse(clean);\n    if (p && typeof p === 'object' && !Array.isArray(p)) { parsed = p; }\n    else { unparseable = true; violations.push('model output was JSON but not an object'); }\n  } catch (e) {\n    unparseable = true;\n    violations.push('model output was not valid JSON');\n  }\n}\n\nconst strArray = (v, field) => {\n  if (v === undefined || v === null) return [];\n  if (!Array.isArray(v)) { violations.push(field + ' was not an array'); return []; }\n  return v.map(x => (typeof x === 'string' ? x : JSON.stringify(x))).filter(s => s.length > 0);\n};\n\nconst oneOf = (v, allowed, field, fallback) => {\n  if (typeof v === 'string' && allowed.includes(v)) return v;\n  violations.push(field + ' was ' + JSON.stringify(v) + ', not one of ' + allowed.join(' / '));\n  return fallback;\n};\n\n// completeness_score is an integer 0-100 in the database.\n// A non-integer strictly between 0 and 1 is the right answer in the wrong unit, so scale it;\n// anything else is clamped into range. Either way the coercion is recorded, never silent.\nlet scoreUnreadable = false;\nconst scoreOf = (v) => {\n  const n = Number(v);\n  if (v === undefined || v === null || v === '' || !Number.isFinite(n)) {\n    violations.push('completeness_score was ' + JSON.stringify(v) + ', not a number');\n    scoreUnreadable = true;\n    return 0;\n  }\n  let s = n;\n  if (!Number.isInteger(n) && n > 0 && n < 1) {\n    s = n * 100;\n    violations.push('completeness_score arrived as the ratio ' + n + ', read as ' + Math.round(s) + ' out of 100');\n  }\n  const r = Math.round(s);\n  const clamped = Math.max(0, Math.min(100, r));\n  if (clamped !== r) violations.push('completeness_score ' + n + ' was out of range, clamped to ' + clamped);\n  return clamped;\n};\n\nconst out = {\n  completeness_score: scoreOf(parsed.completeness_score),\n  completeness_label: oneOf(parsed.completeness_label, ALLOWED_LABEL, 'completeness_label', 'Unknown'),\n  confidence_level:   oneOf(parsed.confidence_level,   ALLOWED_CONF,  'confidence_level',   'Low'),\n  preferred_language: oneOf(parsed.preferred_language, ALLOWED_LANG,  'preferred_language', 'English'),\n  documents_present:  strArray(parsed.documents_present,  'documents_present'),\n  documents_missing:  strArray(parsed.documents_missing,  'documents_missing'),\n  documents_optional: strArray(parsed.documents_optional, 'documents_optional'),\n  ai_summary: typeof parsed.ai_summary === 'string' ? parsed.ai_summary : '',\n  ai_notes:   typeof parsed.ai_notes   === 'string' ? parsed.ai_notes   : '',\n  priority_flag: parsed.priority_flag === true\n};\n\n// Three states, not two. Downstream only needs to know whether anyone assessed these\n// documents; the reason is for the paralegal, and the three read very differently to one.\n// Not `callFailed`: when there was nothing to review the call was never made, and a flag\n// that reports a failure which did not happen is the sort of small lie that becomes a\n// wrong diagnosis at 2 a.m.\nout.model_call_failed = callFailed && !nothingToReview;\n\n// --- Language, and the difference between reading one and replying in one -----\n// `preferred_language` is the reply language and is domain-constrained, so a client who\n// writes Japanese comes back as \"English\" and nothing records that anything happened. The\n// firm's rule is that it operates in Spanish and English only; that rule is fine, but a\n// client is owed the knowledge that they are being answered in a language they did not use.\n//\n// Two independent signals, because neither alone is enough. The model is asked for\n// `detected_language` separately from the reply language and can be wrong or silent; a\n// non-Latin script in the client's own text is proof it did not write Spanish or English\n// and needs no cooperation from anyone.\nconst NON_LATIN = /[\\u0400-\\u04FF\\u0590-\\u05FF\\u0600-\\u06FF\\u0700-\\u074F\\u0900-\\u097F\\u0E00-\\u0E7F\\u1100-\\u11FF\\u3040-\\u30FF\\u3400-\\u4DBF\\u4E00-\\u9FFF\\uAC00-\\uD7AF]/;\nconst declared = String(parsed.detected_language || '').trim();\nconst declaredNorm = declared.toLowerCase();\nconst scriptForeign = NON_LATIN.test(String(fields.document_description || ''));\nconst declaredForeign = declaredNorm.length > 0 &&\n  declaredNorm.indexOf('spanish') === -1 && declaredNorm.indexOf('english') === -1;\n\nout.detected_language = declared || null;\nout.language_supported = !(scriptForeign || declaredForeign);\nif (!out.language_supported && !nothingToReview) {\n  out.priority_flag = true;\n  out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') +\n    'Client wrote in ' + (declared || 'a non-Latin script') +\n    '. The firm replies in Spanish and English only, so the confirmation went out in English and ' +\n    'said so. This intake needs someone who can read it.';\n}\nout.nothing_to_review = nothingToReview;\nout.review_ran = !callFailed && !nothingToReview;\n\nif (nothingToReview) {\n  // Deliberately NOT a contract violation. `contract_violated` means the model returned\n  // something the contract forbids; here the model was never asked. An empty form is an\n  // input condition, and calling it a violation would inflate the one rate the firm uses\n  // to judge whether the classifier is behaving. Flagged for a human on its own merits.\n  out.priority_flag = true;\n  out.ai_summary = 'No documents were described, so there was nothing to review. The intake is recorded and the client has been asked to tell us what they have.';\n  out.documents_missing = ['Not assessed - the client described no documents'];\n  out.ai_notes = 'The submission arrived with an empty document description. No model call was made.';\n} else if (unparseable) {\n  // The two remaining cases read identically to the code and completely differently to a\n  // paralegal: one means the model answered badly, the other that it never answered.\n  out.ai_summary = callFailed\n    ? 'The document review did not run - the model did not respond in time. The intake itself is safe and is recorded; a paralegal must review the documents by hand.'\n    : 'AI parsing error - manual review required.';\n  out.documents_missing = [callFailed ? 'Not assessed - review did not run' : 'Unable to parse AI response'];\n  out.ai_notes = callFailed\n    ? 'Model call failed: ' + callError\n    : 'Raw response: ' + String(text).substring(0, 500);\n}\n\n// A score we could not read must not sit next to a label that asserts completeness.\n// 0 out of 100 beside the word \"Complete\" is worse than admitting we do not know.\nif (scoreUnreadable) {\n  if (out.completeness_label !== 'Unknown') {\n    violations.push('completeness_label ' + JSON.stringify(out.completeness_label) +\n                    ' was dropped to Unknown because the score could not be read');\n  }\n  out.completeness_label = 'Unknown';\n}\n\n// Nothing the model returned can breach a contract it was never given. With no description\n// there was no call, so the field-level complaints collected above - score not a number,\n// label not in the domain - are about an answer that was never requested. Clearing them\n// keeps `contract_violated` meaning what the firm reads it as: the classifier misbehaved.\nif (nothingToReview) violations.length = 0;\n\n// A contract violation is not the model's to report. It is ours to surface to a human.\nout.contract_violated = violations.length > 0;\nif (out.contract_violated) {\n  out.priority_flag = true;\n  out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') + 'Output contract: ' + violations.join('; ');\n}\n\n// --- Checklist grounding, enforced rather than instructed -------------------\n// The client is only ever shown documents the firm itself lists for this case type.\n// Whatever the model invents or paraphrases is kept for the paralegal and never sent out.\nconst catalogue = $('Build DeepSeek Body').first().json.checklist || [];\n// Diacritics are stripped rather than dropped. Half the firm's intake is written in\n// Spanish, and [^a-z0-9] turned 'declaración' into 'declaraci n' — every accented word\n// was silently cut in two, so no Spanish term could ever match anything.\nconst norm = (s) => String(s == null ? '' : s)\n  .toLowerCase()\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/\\([^)]*\\)/g, ' ')\n  .replace(/[^a-z0-9]+/g, ' ')\n  .trim();\n// A form number identifies one document unambiguously inside a single case type's\n// catalogue, so 'I-130 receipt notice' is the I-130 petition. Matching on it here is\n// deterministic, costs no tokens, and does not depend on the model agreeing.\nconst formCodes = (s) => {\n  const out = [];\n  const re = /(^| )([a-z]{1,2}) (\\d{2,4})( |$)/g;\n  let m;\n  while ((m = re.exec(s)) !== null) { out.push(m[2] + m[3]); re.lastIndex -= 1; }\n  return out;\n};\nconst same = (a, b) => {\n  const x = norm(a), y = norm(b);\n  if (!x || !y) return false;\n  if (x === y || x.indexOf(y) !== -1 || y.indexOf(x) !== -1) return true;\n  const fx = formCodes(x), fy = formCodes(y);\n  return fx.length === 1 && fy.length === 1 && fx[0] === fy[0];\n};\n\n// --- Evidence anchoring ----------------------------------------------------\n// The model claiming a document is present is not the same as the client saying they\n// have it. Asked about a case where the client wrote \"my previous lawyer handled\n// everything, I assume the whole package was submitted\", the model returned all nine\n// Family Visa documents as present: an inference about a third party, rendered as\n// possession. Nothing above could tell the difference, because nothing above ever read\n// what the client wrote.\n//\n// So a document is only shown as present if the client's own words carry an anchor for\n// it — its form number, or a term for it in either language the firm accepts. Anchors\n// only ever *remove* a claim; they never add one. The failure therefore moves to the\n// recoverable side: at worst a client is asked to confirm something they already sent.\nconst ANCH = {\n  'Petition I-130': ['peticion familiar', 'family petition'],\n  'Proof of US Petitioner Status': ['citizenship', 'ciudadania', 'naturalization', 'naturalizacion',\n    'green card', 'residencia', 'us citizen', 'ciudadano', 'us passport', 'pasaporte americano',\n    'pasaporte estadounidense', 'estadounidense'],\n  'Proof of Relationship': ['marriage certificate', 'acta de matrimonio', 'certificado de matrimonio',\n    'marriage license', 'relationship', 'relacion', 'parentesco', 'photos together', 'fotos juntos',\n    'joint account', 'cuenta conjunta', 'wedding', 'boda', 'casados', 'married'],\n  'Beneficiary passport': ['passport', 'pasaporte'],\n  'I-864 Affidavit of Support': ['affidavit of support', 'affidavit', 'declaracion jurada',\n    'sustento economico', 'sponsor'],\n  'DS-260 form': ['ds 260'],\n  'Medical exam I-693': ['medical exam', 'examen medico', 'medical examination', 'examen de salud',\n    'vaccination', 'vacunas'],\n  'Police clearance certificates': ['police clearance', 'police certificate', 'antecedentes penales',\n    'antecedentes policiales', 'certificado de policia', 'record policial', 'criminal record'],\n  'Birth certificates for dependents': ['birth certificate', 'acta de nacimiento',\n    'partida de nacimiento', 'certificado de nacimiento'],\n\n  'I-140 approval notice': ['approval notice', 'aviso de aprobacion'],\n  'Priority Date confirmation': ['priority date', 'fecha de prioridad'],\n  'I-485 application': ['adjustment of status', 'ajuste de estatus'],\n  'Employment verification letter': ['employment verification', 'verification letter',\n    'carta de trabajo', 'carta laboral', 'carta de empleo', 'employment letter'],\n  'Educational credentials': ['diploma', 'degree', 'transcript', 'titulo', 'universidad',\n    'university', 'educational', 'estudios', 'bachelor', 'master'],\n  'Professional certifications': ['certification', 'certificacion', 'license', 'licencia',\n    'credential', 'colegiatura'],\n  'Tax returns last 3 years': ['tax return', 'taxes', 'impuestos', 'declaracion de impuestos',\n    'w 2', '1040', 'irs'],\n  'Passport copies all pages': ['passport', 'pasaporte'],\n\n  'I-589 application': ['asylum application', 'solicitud de asilo'],\n  'Personal statement detailed': ['personal statement', 'declaracion personal', 'my story',\n    'mi historia', 'declaracion escrita', 'written statement', 'affidavit', 'testimonio propio'],\n  'Country condition evidence': ['country condition', 'condiciones del pais', 'informes del pais',\n    'news article', 'articulos de prensa', 'human rights', 'derechos humanos', 'noticias',\n    'situation in my country', 'situacion en mi pais', 'situation in my region'],\n  'Police/medical/human rights reports': ['police report', 'denuncia', 'medical report',\n    'informe medico', 'reporte medico', 'human rights', 'derechos humanos', 'hospital'],\n  'Identity documents': ['identity', 'identidad', 'cedula', 'id card', 'birth certificate',\n    'acta de nacimiento', 'passport', 'pasaporte', 'documento de identidad'],\n  'Evidence of persecution': ['persecution', 'persecucion', 'threat', 'amenaza', 'tortura',\n    'torture', 'evidence of', 'pruebas', 'attacked', 'atacaron'],\n  'Witness statements if available': ['witness', 'testigo', 'testimonio'],\n  'Photos of harm': ['photo', 'foto', 'picture', 'imagen', 'fotografia'],\n  'Attorney G-28 form': ['notice of appearance'],\n  'Translations of non-English documents': ['translation', 'traduccion', 'traducido', 'translated',\n    'certified translation'],\n\n  'I-751 if applicable': ['removal of conditions', 'remover condiciones', 'conditional resident'],\n  'Green card copy both sides': ['green card', 'tarjeta verde', 'tarjeta de residencia',\n    'permanent resident card', 'residencia permanente', 'i 551', 'mica'],\n  'Passport photos x2': ['passport photo', 'foto tipo pasaporte', 'photographs', 'fotos',\n    'photos', 'foto carnet'],\n  'Tax returns last 5 years': ['tax return', 'taxes', 'impuestos', 'declaracion de impuestos',\n    'w 2', '1040', 'irs'],\n  'N-400 application': ['naturalization application', 'solicitud de ciudadania'],\n  'Travel history documentation': ['travel', 'historial de viajes', 'trip', 'viaje',\n    'salidas del pais', 'abroad', 'en el extranjero', 'entradas y salidas'],\n  'Selective Service proof': ['selective service', 'servicio selectivo'],\n  'Criminal history disclosure': ['criminal', 'arrest', 'arresto', 'antecedentes', 'dui',\n    'citation', 'multa', 'corte', 'court', 'convicted', 'condena'],\n  'Employment history last 5 years': ['employment history', 'historial laboral', 'work history',\n    'trabajos', 'empleos', 'jobs', 'employers', 'empleadores']\n};\n\nconst descNorm  = norm(fields.document_description);\nconst descCodes = formCodes(descNorm);\nconst grounded = (c) => {\n  // The form number is the strongest anchor there is: it names one document and cannot\n  // be a paraphrase of another.\n  if (formCodes(norm(c)).some(k => descCodes.indexOf(k) !== -1)) return true;\n  return (ANCH[c] || []).some(a => descNorm.indexOf(a) !== -1);\n};\n\nconst claimedPresent = out.documents_present;\nconst claimed = catalogue.filter(c => claimedPresent.some(m => same(c, m)));\nconst catalogue_present  = claimed.filter(grounded);\nconst catalogue_inferred = claimed.filter(c => catalogue_present.indexOf(c) === -1);\nconst catalogue_missing = catalogue.filter(c => catalogue_present.indexOf(c) === -1);\n\nout.catalogue_claimed  = claimed;\nout.catalogue_inferred = catalogue_inferred;\nif (catalogue_inferred.length) {\n  out.priority_flag = true;\n  out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') +\n    'Claimed present but not stated by the client, so still requested: ' +\n    catalogue_inferred.join('; ');\n}\n\nconst everythingClaimed = claimedPresent\n  .concat(out.documents_missing)\n  .concat(out.documents_optional);\nconst offcatalogue = everythingClaimed.filter(\n  m => !catalogue.some(c => same(c, m))\n);\n\n// A review that never ran has nothing missing and nothing present. Letting the filter run\n// would mark the whole catalogue missing, and telling a client they are short of all ten\n// documents when in fact nobody looked is worse than telling them nothing.\nout.catalogue_present = out.review_ran ? catalogue_present : [];\nout.catalogue_missing = out.review_ran ? catalogue_missing : [];\nout.offcatalogue = out.review_ran ? offcatalogue : [];\nout.catalogue_size = catalogue.length;\n\nif (offcatalogue.length) {\n  out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') +\n    'Outside the firm checklist, not shown to the client: ' + offcatalogue.join('; ');\n}\n\n// --- The score is arithmetic, not an opinion ---------------------------------\n// Completeness against a checklist is a count over a total, and the system already holds\n// both numbers. Taking the percentage from the model instead meant nothing ever compared\n// it to the list beside it: a run could report 100 out of 100 with one document ticked,\n// and did — under a prompt injection, and unremarked. Measured over 93 captured responses,\n// the model's own label and its own score also disagree with each other constantly:\n// 'Incomplete' spanned 30-67 while 'Critically Incomplete' spanned 0-44.\n//\n// So both are derived here, from one number, and can no longer contradict each other or\n// the list. The model's figures are kept beside them for the paralegal, never shown to\n// the client, and their divergence is recorded rather than assumed small.\nconst LABEL_BANDS = [[100, 'Complete'], [70, 'Mostly Complete'], [30, 'Incomplete'], [0, 'Critically Incomplete']];\n\nout.model_completeness_score = out.completeness_score;\nout.model_completeness_label = out.completeness_label;\n\nif (!out.review_ran) {\n  // Nothing was assessed, by either route. An empty present list is absence of an answer\n  // and not an answer of zero; deriving 0 would turn a non-event into a confident verdict.\n  out.completeness_score = null;\n  out.completeness_label = 'Unknown';\n} else if (catalogue.length === 0) {\n  // 'Other' has no checklist. A percentage of an empty catalogue is not a low score, it\n  // is an undefined one, and 0 and 100 are both lies about it.\n  out.completeness_score = null;\n  out.completeness_label = 'Unknown';\n  out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') +\n    'No checklist exists for this case type, so completeness is undefined rather than low. ' +\n    'The model offered ' + out.model_completeness_score + '.';\n  out.priority_flag = true;\n} else {\n  const derived = Math.round(100 * catalogue_present.length / catalogue.length);\n  out.completeness_score = derived;\n  for (let i = 0; i < LABEL_BANDS.length; i++) {\n    if (derived >= LABEL_BANDS[i][0]) { out.completeness_label = LABEL_BANDS[i][1]; break; }\n  }\n  out.score_basis = catalogue_present.length + ' of ' + catalogue.length;\n  // A wide gap is not an error to correct — the derived figure already stands — but it is\n  // the clearest signal available that the model and the checklist read the same intake\n  // differently, and a paralegal should see which.\n  const gap = scoreUnreadable ? null : Math.abs(derived - out.model_completeness_score);\n  if (gap !== null && gap >= 25) {\n    out.priority_flag = true;\n    out.ai_notes = (out.ai_notes ? out.ai_notes + ' | ' : '') +\n      'The model scored this ' + out.model_completeness_score + ' where the checklist gives ' +\n      derived + ' (' + out.score_basis + ').';\n  }\n}\n\nreturn [{ json: { ...fields, ...out, deepseek_raw_response: raw } }];\n"
    },
    "position": [
-    -1440,
+    -1008,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -657,7 +679,7 @@
     "jsCode": "const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;');\nconst fields = $('Set Fields').first().json;\nconst d = $('Parse Deepseek Response').first().json;\n\n// The firm replies in Spanish and English. `preferred_language` was detected, constrained\n// and stored since this build existed, and never once read: every client got English,\n// including the Spanish-speaking majority. One string table, one template.\n//\n// Document names are NOT translated. They are the firm's catalogue verbatim, and rendering\n// a client a document name nobody at the firm wrote is the exact thing DECISIONS.md rule 1\n// forbids - it does not stop being true because the invented string would be a translation.\nconst es = d.preferred_language === 'Spanish';\nconst T = es ? {\n  subject: 'Su solicitud de caso migratorio — Holt & Vargas',\n  thanks: 'Gracias, ',\n  received: 'Hemos recibido su solicitud de caso de ',\n  dear: 'Estimado/a ',\n  intro: 'Gracias por enviar sus documentos a Holt &amp; Vargas Immigration Law. Hemos recibido su formulario y nuestro equipo lo está revisando. Un asistente legal se pondrá en contacto con usted dentro de <strong>1 día hábil</strong> para hablar de su caso y de los siguientes pasos.',\n  docsHead: '📋 Sus documentos',\n  noDesc: 'Su formulario llegó sin una descripción de los documentos que tiene, así que no pudimos contrastar su expediente con nuestra lista. Responda a este correo indicándonos qué documentos ya posee y seguimos desde ahí.',\n  notRun: 'Una persona de nuestro equipo está revisando su envío personalmente y le confirmará qué documentos faltan cuando le contactemos. Por ahora no necesita hacer nada más.',\n  haveHead: '✅ Documentos que usted tiene',\n  needHead: '📋 Documentos que aún faltan',\n  needIntro: 'Por favor empiece a reunir estos antes de su consulta:',\n  complete: '✅ ¡Su paquete de documentos parece completo! Nuestro equipo lo revisará y se lo confirmará.',\n  nextHead: 'Qué ocurre ahora',\n  next: '1. Nuestro asistente legal revisa su envío<br>2. Le llamamos para hablar de su caso<br>3. Le guiamos con los documentos que falten<br>4. Preparamos su caso para presentarlo',\n  questions: '¿Preguntas? Llámenos al <strong>(212) 555-0190</strong> o responda a este correo.',\n  regards: 'Un cordial saludo,',\n  footer: 'Esta es una confirmación automática. La gestión completa del caso la lleva nuestro equipo legal.'\n} : {\n  subject: 'Your Immigration Case Submission — Holt & Vargas',\n  thanks: 'Thank You, ',\n  received: 'We have received your ',\n  dear: 'Dear ',\n  intro: 'Thank you for submitting your documents to Holt &amp; Vargas Immigration Law. We have received your intake form and our team is currently reviewing it. A paralegal will contact you within <strong>1 business day</strong> to discuss your case and next steps.',\n  docsHead: '📋 Your Documents',\n  noDesc: 'Your form arrived without a description of the documents you have, so we could not check your file against our list. Please reply to this email telling us which documents you already hold and we will take it from there.',\n  notRun: 'A member of our team is reviewing your submission personally and will confirm which documents are still needed when we contact you. Nothing further is needed from you right now.',\n  haveHead: '✅ Documents You Have',\n  needHead: '📋 Documents Still Needed',\n  needIntro: 'Please begin gathering these before your consultation:',\n  complete: '✅ Your document package appears complete! Our team will review and confirm.',\n  nextHead: 'What Happens Next',\n  next: '1. Our paralegal reviews your submission<br>2. We call you to discuss your case<br>3. We guide you through any missing documents<br>4. Your case is prepared for filing',\n  questions: 'Questions? Call us at <strong>(212) 555-0190</strong> or reply to this email.',\n  regards: 'Warm regards,',\n  footer: 'This is an automated confirmation. Full case management is handled by our legal team.'\n};\n\n// Written in English deliberately: it is addressed to somebody who has just demonstrated\n// they read neither of the two languages the firm works in, so it is kept to the shortest\n// plain sentence that still says what happened and what to do.\nconst langNotice = d.language_supported === false\n  ? `<div style=\"background:#eef2ff;border-left:4px solid #4338ca;border-radius:0 8px 8px 0;padding:20px 24px;margin:0 0 20px;\"><p style=\"color:#3730a3;font-weight:bold;margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;\">Language</p><p style=\"color:#444;font-size:14px;margin:0;\">Our office works in <strong>English and Spanish</strong>, so this confirmation is in English. Your submission has been passed to a person, and you are welcome to reply in your own language or to bring someone to interpret when we call.</p></div>`\n  : '';\n\nconst missing = (d.catalogue_missing ?? []).map(x => `<li style='padding:8px 0;border-bottom:1px solid #fde68a;'>📄 ${esc(x)}</li>`).join('');\nconst present = (d.catalogue_present ?? []).map(x => `<li style='padding:8px 0;border-bottom:1px solid #bbf7d0;color:#166534;'>✅ ${esc(x)}</li>`).join('');\n\nconst html = `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>\n<body style=\"margin:0;padding:0;background:#8a7a65;font-family:Georgia,serif;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr><td align=\"center\" style=\"padding:32px 16px;\">\n<table width=\"620\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:620px;\">\n<tr><td style=\"padding-bottom:20px;text-align:center;\">\n<img src=\"https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/holt-vargas-logo.png\" alt=\"Holt & Vargas Immigration Law\" style=\"max-height:60px;width:100%;\">\n</td></tr>\n<tr><td style=\"background:#1E3A5F;border-radius:12px 12px 0 0;padding:40px 32px;text-align:center;\">\n<p style=\"margin:0 0 8px;font-size:26px;font-weight:bold;color:#fff;\">${T.thanks}${esc(String(fields.full_name || '').split(' ')[0])}</p>\n<p style=\"margin:0;font-size:15px;color:rgba(255,255,255,0.75);\">${T.received}${esc(fields.case_type)}</p>\n</td></tr>\n<tr><td style=\"background:#fff;padding:36px;border:1px solid #e5e0d5;border-top:none;\">\n<p style=\"margin:0 0 20px;font-size:15px;color:#444;line-height:1.8;\">${T.dear}<strong style=\"color:#1E3A5F;\">${esc(fields.full_name)}</strong>,</p>\n<p style=\"margin:0 0 24px;font-size:15px;color:#444;line-height:1.8;\">${T.intro}</p>\n\n${langNotice}\n\n${!d.review_ran ? `<div style=\"background:#fffbeb;border-left:4px solid #C9A84C;border-radius:0 8px 8px 0;padding:20px 24px;margin:0 0 20px;\"><p style=\"color:#92400e;font-weight:bold;margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;\">${T.docsHead}</p><p style=\"color:#444;font-size:14px;margin:0;\">${d.nothing_to_review ? T.noDesc : T.notRun}</p></div>` : ''}\n\n${(d.review_ran && present) ? `<div style=\"background:#f0fdf4;border-left:4px solid #166534;border-radius:0 8px 8px 0;padding:20px 24px;margin:0 0 20px;\">\n<p style=\"color:#166534;font-weight:bold;margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;\">${T.haveHead}</p>\n<ul style=\"list-style:none;padding:0;margin:0;font-size:14px;\">${present}</ul>\n</div>` : ''}\n\n${!d.review_ran ? '' : missing ? `<div style=\"background:#fffbeb;border-left:4px solid #C9A84C;border-radius:0 8px 8px 0;padding:20px 24px;margin:0 0 20px;\">\n<p style=\"color:#92400e;font-weight:bold;margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px;\">${T.needHead}</p>\n<p style=\"color:#444;font-size:14px;margin:0 0 12px;\">${T.needIntro}</p>\n<ul style=\"list-style:none;padding:0;margin:0;font-size:14px;\">${missing}</ul>\n</div>` : `<div style=\"background:#f0fdf4;border-left:4px solid #166534;border-radius:0 8px 8px 0;padding:20px 24px;margin:0 0 20px;\">\n<p style=\"color:#166534;font-weight:bold;margin:0;\">${T.complete}</p>\n</div>`}\n\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#1E3A5F;border-radius:8px;margin:0 0 24px;\">\n<tr><td style=\"padding:20px 24px;\">\n<p style=\"color:#C9A84C;font-weight:bold;margin:0 0 12px;font-size:13px;text-transform:uppercase;letter-spacing:1px;\">${T.nextHead}</p>\n<p style=\"color:rgba(255,255,255,0.85);font-size:14px;line-height:2;margin:0;\">${T.next}</p>\n</td></tr></table>\n\n<p style=\"font-size:15px;color:#444;line-height:1.8;\">${T.questions}</p>\n<p style=\"color:#444;margin:0;\">${T.regards}<br><strong style=\"color:#1E3A5F;\">Holt & Vargas Immigration Law</strong></p>\n</td></tr>\n<tr><td style=\"background:#1E3A5F;border-radius:0 0 12px 12px;padding:20px;text-align:center;\">\n<p style=\"margin:0;font-size:11px;color:rgba(255,255,255,0.5);\">${T.footer}<br>Holt & Vargas Immigration Law · (212) 555-0190</p>\n</td></tr>\n</table></td></tr></table>\n</body></html>`;\n\nreturn [{ json: {\n  to: fields.email,\n  from: 'Holt & Vargas Immigration Law <intake@mail.mcruz-portfolio.space>',\n  subject: T.subject,\n  html_client: html\n} }];\n"
    },
    "position": [
-    704,
+    1024,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -686,7 +708,7 @@
     "url": "https://api.resend.com/emails"
    },
    "position": [
-    944,
+    1216,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -715,7 +737,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_attorneys?role=eq.Paralegal&active=eq.true&select=id,full_name,specializations"
    },
    "position": [
-    -816,
+    -384,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -728,7 +750,7 @@
     "jsCode": "const caseType = $('Set Fields').first().json.case_type;\nconst raw = $input.first().json;\nconst list = Array.isArray(raw) ? raw : [raw];\n\nconst match = list.find(p => (p.specializations || []).includes(caseType));\nconst chosen = match || list[0];\nif (!chosen) throw new Error('No active paralegal found');\n\nconst prev = $('Extract Client ID').first().json;\nreturn [{ json: { ...prev, paralegal_id: chosen.id, paralegal_name: chosen.full_name } }];"
    },
    "position": [
-    -608,
+    -192,
     208
    ],
    "type": "n8n-nodes-base.code",
@@ -775,7 +797,7 @@
     "options": {}
    },
    "position": [
-    -2304,
+    -2240,
     208
    ],
    "type": "n8n-nodes-base.if",
@@ -792,8 +814,8 @@
     "responseBody": "={{ JSON.stringify({ success:false, status:'rejected', reasons: $('Guard').first().json.guard_reasons, source_event_id: $('Guard').first().json.source_event_id || null }) }}"
    },
    "position": [
-    -2000,
-    512
+    -1936,
+    720
    ],
    "type": "n8n-nodes-base.respondToWebhook",
    "typeVersion": 1.5
@@ -877,7 +899,7 @@
     "responseBody": "={{ JSON.stringify({ success:true, status:'duplicate', message:'This submission was already processed; nothing was written and no email was sent.', source_event_id: $('Guard').first().json.source_event_id }) }}"
    },
    "position": [
-    -1616,
+    -1440,
     -48
    ],
    "type": "n8n-nodes-base.respondToWebhook",
@@ -924,7 +946,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
    },
    "position": [
-    -2075,
+    -2016,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -971,8 +993,8 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
    },
    "position": [
-    -1960,
-    430
+    -2000,
+    432
    ],
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2
@@ -1018,8 +1040,8 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
    },
    "position": [
-    -1890,
-    430
+    -1792,
+    400
    ],
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2
@@ -1065,8 +1087,8 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
    },
    "position": [
-    -1050,
-    380
+    -576,
+    416
    ],
    "type": "n8n-nodes-base.httpRequest",
    "typeVersion": 4.2
@@ -1112,7 +1134,7 @@
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
    },
    "position": [
-    1390,
+    1392,
     208
    ],
    "type": "n8n-nodes-base.httpRequest",
@@ -1146,17 +1168,87 @@
     "options": {}
    },
    "position": [
-    -1720,
+    -1456,
     208
    ],
    "type": "n8n-nodes-base.if",
    "typeVersion": 2.3
+  },
+  {
+   "id": "b0000001-0000-4000-8000-000000000001",
+   "name": "Error Trigger",
+   "parameters": {},
+   "position": [
+    -2688,
+    1040
+   ],
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1
+  },
+  {
+   "id": "b0000001-0000-4000-8000-000000000002",
+   "name": "Classify Failure",
+   "parameters": {
+    "jsCode": "\n// A failure that is someone else's ceiling is not a defect of ours. The status vocabulary\n// separates them: blocked = an external limit, error = our fault.\nconst e = $json.execution || {};\nconst msg = String((e.error && e.error.message) || 'unknown');\nconst node = e.lastNodeExecuted || null;\nconst external = /rate.?limit|429|quota|too many requests|daily limit|insufficient balance|payment required|402|503|502|504|timeout|ETIMEDOUT|ECONNRESET/i;\nreturn [{ json: {\n  n8n_execution_id: String(e.id == null ? '' : e.id),\n  status: external.test(msg) ? 'blocked' : 'error',\n  stage: 'failed',\n  error_node: node,\n  error_message: msg.slice(0, 1000),\n  finished_at: new Date().toISOString()\n} }];\n"
+   },
+   "position": [
+    -2458,
+    1040
+   ],
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2
+  },
+  {
+   "id": "b0000001-0000-4000-8000-000000000003",
+   "name": "Record Failure",
+   "parameters": {
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "apikey",
+       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
+      },
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "resolution=merge-duplicates,return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify({ n8n_execution_id: $json.n8n_execution_id, webhook: 'hvl-intake', status: $json.status, stage: $json.stage, error_node: $json.error_node, error_message: $json.error_message, finished_at: $json.finished_at }) }}",
+    "method": "POST",
+    "options": {
+     "response": {
+      "response": {
+       "fullResponse": true
+      }
+     },
+     "timeout": 15000
+    },
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
+   },
+   "position": [
+    -2228,
+    1040
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
   }
  ],
  "settings": {
   "availableInMCP": true,
   "binaryMode": "separate",
-  "errorWorkflow": "ZcVRMF8TacvQ5rQg",
+  "errorWorkflow": "xurYOv7EzKPumZq0",
   "executionOrder": "v1"
  }
 }

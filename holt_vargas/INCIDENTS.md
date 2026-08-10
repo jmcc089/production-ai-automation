@@ -83,7 +83,8 @@ live webhook, which now returns a JSON body on every path including failure.
 ### Follow-up
 
 The absence of an execution record was the reason this was invisible, so `hvl_workflow_runs` and a
-separate **Failure Recorder** workflow were built in the same pass. A run that dies now leaves a row
+a **Failure Recorder** chain — at the time a separate workflow, folded onto the intake canvas on
+2026-08-10 — were built in the same pass. A run that dies now leaves a row
 stuck at `started` with its `source_event_id`, which is enough to replay it.
 
 ---

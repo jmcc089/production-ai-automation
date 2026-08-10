@@ -1,7 +1,13 @@
-# workflow/ — the two n8n workflows, in version control
+# workflow/ — the n8n workflow, in version control
 
-`intake.json` and `failure-recorder.json` are the live workflows, exported and normalised.
-`sync.py` moves them in either direction and tells you when the two have diverged.
+`intake.json` is the live workflow, exported and normalised. `sync.py` moves it in either
+direction and tells you when the two have diverged.
+
+**It is one workflow.** Until 2026-08-10 the failure recorder was a second one, pointed at by
+`settings.errorWorkflow`. Its three nodes — `Error Trigger` → `Classify Failure` →
+`Record Failure` — now sit on this canvas and the pointer aims at the workflow itself, which
+n8n permits and which Cedar already did. The split was what once allowed the recorder to be
+inactive while reporting no problem at all.
 
 ```bash
 export N8N_API_KEY=...            # an n8n public-API key
@@ -65,6 +71,14 @@ Decide which side is right, then `pull` (live was right, record it) or `push` (r
 restore it) — and drive an intake through afterwards, reading the delivered result rather than
 the status code.
 
-*Verified 2026-08-10: `check` was given the exact 2026-08-09 failure in the repo copy and
-reported the five missing nodes by name and exited 1; `push` round-trips byte-identical and a
-live intake succeeded afterwards.*
+*Verified 2026-08-10: `check` was given the exact 2026-08-09 failure in the repo copy, named the
+five missing nodes and exited 1; `push` round-trips byte-identical and a live intake succeeded
+afterwards. The merged Error Trigger was verified by forcing a genuine unhandled failure — with
+the old recorder **deactivated** — which wrote `error` / `failed` / `Deepseek API` to
+`hvl_workflow_runs` from the same canvas.*
+
+*It also caught a real drift the same day: the live canvas had been rearranged in the editor, and
+`check` reported the position changes. I read them as diff noise and pushed over them, which is
+the one thing this file tells you not to do. The layout was restored from backup. On layout, the
+person arranging the canvas is right — the tool only tells you the two disagree, it does not know
+which side should win.*

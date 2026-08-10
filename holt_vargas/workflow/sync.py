@@ -29,9 +29,12 @@ import urllib.error
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# One workflow, not two. The failure recorder used to be a separate workflow pointed at by
+# `settings.errorWorkflow`; on 2026-08-10 its three nodes were folded onto this canvas and
+# the pointer aimed at the workflow itself, which n8n permits and Cedar already relied on.
+# The split was what once let the recorder sit inactive while reporting no problem.
 WORKFLOWS = {
     "intake.json": "xurYOv7EzKPumZq0",
-    "failure-recorder.json": "ZcVRMF8TacvQ5rQg",
 }
 
 # Fields n8n changes on its own — timestamps, version counters, ownership. Keeping them
