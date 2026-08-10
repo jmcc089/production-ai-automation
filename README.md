@@ -116,6 +116,23 @@ Cedar's steps literally:
   there published real order data to anyone holding the site's public key. See
   [`brasa_commerce/SECURITY.md`](brasa_commerce/SECURITY.md).
 
+**Holt & Vargas differs from the sequence in two places**, both of which will leave you with a
+system that looks correct and is not:
+
+- **The two workflows are in version control**, at `holt_vargas/workflow/`, with `sync.py` to
+  pull, push and diff them against the live instance. Cedar's and Brasa's are not: they exist only
+  inside n8n. Holt's are there because Holt's reverted silently in production and nothing noticed
+  for hours — see `holt_vargas/INCIDENTS.md`.
+- **The failure recorder is a second workflow**, `Holt & Vargas - Failure Recorder`
+  (`ZcVRMF8TacvQ5rQg`), not an Error Trigger chain on the same canvas as Cedar's. It must exist,
+  be **active**, and be named in the intake workflow's `settings.errorWorkflow`. An inactive error
+  workflow records nothing and reports no problem — that is exactly how it was found.
+- **Step 2's equivalent is `hvl_attorneys`, and its `specializations` column routes.**
+  `hvl_assign_case_staff` matches `new.case_type = any(a.specializations)`, so a value that is not
+  one of the firm's five case types can never match: routing silently falls through with no error
+  anywhere. `hvl_attorneys_specializations_domain` now refuses those values, but seed the roles
+  correctly — a case also cannot be assigned to a paralegal whose `role` is not `Paralegal`.
+
 **Not rehearsed end to end.** These steps are reconstructed from the built system and from the
 migration and deployment record, not from a clean-room rebuild. Steps 1–3 and 5 have been verified
 against what the code actually reads; the ordering of 4 and 6–9 is derived rather than re-executed.

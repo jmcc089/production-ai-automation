@@ -11,3 +11,4 @@ cedar_healthcare/eval/.env
 __pycache__/
 *.pyc
 brasa_commerce/eval/.env
+holt_vargas/eval/.env

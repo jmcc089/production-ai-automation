@@ -1,0 +1,104 @@
+{
+ "active": true,
+ "connections": {
+  "Classify Failure": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Record Failure",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Error Trigger": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Classify Failure",
+      "type": "main"
+     }
+    ]
+   ]
+  }
+ },
+ "id": "ZcVRMF8TacvQ5rQg",
+ "name": "Holt & Vargas - Failure Recorder",
+ "nodes": [
+  {
+   "id": "b0000001-0000-4000-8000-000000000001",
+   "name": "Error Trigger",
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ],
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1
+  },
+  {
+   "id": "b0000001-0000-4000-8000-000000000002",
+   "name": "Classify Failure",
+   "parameters": {
+    "jsCode": "\n// A failure that is someone else's ceiling is not a defect of ours. The status vocabulary\n// separates them: blocked = an external limit, error = our fault.\nconst e = $json.execution || {};\nconst msg = String((e.error && e.error.message) || 'unknown');\nconst node = e.lastNodeExecuted || null;\nconst external = /rate.?limit|429|quota|too many requests|daily limit|insufficient balance|payment required|402|503|502|504|timeout|ETIMEDOUT|ECONNRESET/i;\nreturn [{ json: {\n  n8n_execution_id: String(e.id == null ? '' : e.id),\n  status: external.test(msg) ? 'blocked' : 'error',\n  stage: 'failed',\n  error_node: node,\n  error_message: msg.slice(0, 1000),\n  finished_at: new Date().toISOString()\n} }];\n"
+   },
+   "position": [
+    220,
+    0
+   ],
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2
+  },
+  {
+   "id": "b0000001-0000-4000-8000-000000000003",
+   "name": "Record Failure",
+   "parameters": {
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "apikey",
+       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
+      },
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "resolution=merge-duplicates,return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify({ n8n_execution_id: $json.n8n_execution_id, webhook: 'hvl-intake', status: $json.status, stage: $json.stage, error_node: $json.error_node, error_message: $json.error_message, finished_at: $json.finished_at }) }}",
+    "method": "POST",
+    "options": {
+     "response": {
+      "response": {
+       "fullResponse": true
+      }
+     },
+     "timeout": 15000
+    },
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_workflow_runs?on_conflict=n8n_execution_id"
+   },
+   "position": [
+    460,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  }
+ ],
+ "settings": {
+  "executionOrder": "v1"
+ }
+}
