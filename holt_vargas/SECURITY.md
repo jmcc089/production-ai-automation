@@ -120,8 +120,17 @@ nothing about this, because the leak came from Supabase nodes; the probe was red
 rotating it would break all four Netlify front ends at once — update the n8n credential, and delete
 executions 628, 629 and 630, which still hold copies of the old one.
 
-**What remains true about `$env`:** `RESEND_API_KEY` is still read that way by 9 nodes, because no
-Resend credential exists yet. The same leak shape applies to it on a failed send.
+**A correction, 2026-08-11.** This file, the assurance record and a commit message all said the
+same leak shape applied to `RESEND_API_KEY`, still read from the environment by 9 nodes. **It does
+not.** The leak was never about `$env` — it was about *which header*. n8n redacts `authorization`
+and does not redact `apikey`, and execution 630 shows both in the same request: `apikey` holding a
+raw JWT, `Authorization` reading `**hidden**` two lines below it. The Resend nodes send their key
+**only** as `Authorization: Bearer …`, so it was already redacted and never appeared in an error
+context.
+
+Leaving `RESEND_API_KEY` in Railway is therefore not a residual risk of this kind. A Header Auth
+credential would still be tidier — one place instead of one per build — but it buys no exposure
+reduction, and saying otherwise was wrong.
 
 ## 5 · What is missing, and what closing it actually costs
 

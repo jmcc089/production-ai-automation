@@ -12,6 +12,11 @@ deployed/ and hashed in deployed/SHA256SUMS, and nodes_shim.js executes it verba
 reimplementation in Python would keep passing after the workflow changed, which is the one
 failure mode an eval must not have.
 
+Needs a DeepSeek key of its own in `eval/.env` as `DEEPSEEK_API_KEY=…`. It calls the model
+directly rather than going through n8n, which is the point — it tests the deployed node code
+against the real model without the workflow in the way — so rotating the key in the n8n
+credential does not reach it. A dead key here shows up as `HTTP 401` on every case.
+
   python3 run.py                     # the frozen set
   python3 run.py --holdout           # the holdout set, written after the rules were frozen
   python3 run.py --repeat 3          # same set N times, to show the instability band
