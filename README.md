@@ -9,7 +9,7 @@ that fails a contract.
 | `cedar_healthcare/` | Clinic intake triage | Classify and route only — the system never gives clinical advice. Acute cases short-circuit to an urgent alert. |
 | `holt_vargas/` | Law firm intake | Grounded on an in-prompt checklist rather than retrieval. |
 | `brasa_commerce/` | E-commerce support | True RAG over a product and order corpus. |
-| `n8n/` | Shared automation runtime | Build source for the Railway service the three workflows run on. |
+| `n8n/` | Shared automation runtime | Build source for the Railway service, and `workflows/` — all four workflow definitions under version control, with a drift check. |
 
 Each build is a static dashboard plus an n8n workflow. All three share one Supabase project and one
 n8n instance, isolated by table prefix (`ch_`, `hvl_`, `bc_`) and by webhook path.
@@ -119,10 +119,11 @@ Cedar's steps literally:
 **Holt & Vargas differs from the sequence in two places**, both of which will leave you with a
 system that looks correct and is not:
 
-- **The workflow is in version control**, at `holt_vargas/workflow/`, with `sync.py` to pull, push
-  and diff it against the live instance. Cedar's and Brasa's are not: they exist only inside n8n.
-  Holt's is there because Holt's reverted silently in production and nothing noticed for hours —
-  see `holt_vargas/INCIDENTS.md`.
+- **All four workflows are in version control**, at [`n8n/workflows/`](n8n/workflows/), with
+  `sync.py` to pull, push and diff them against the live instance. Holt's went in first because
+  Holt's reverted silently in production and nothing noticed for hours (`holt_vargas/INCIDENTS.md`);
+  Cedar's and Brasa's followed because they run on the same n8n and were exposed to the same
+  accident with nothing watching.
 - **The failure recorder is on the same canvas**, as it is for Cedar — `Error Trigger` →
   `Classify Failure` → `Record Failure`, with `settings.errorWorkflow` pointing at the workflow
   **itself**, which n8n permits. Until 2026-08-10 it was a separate workflow

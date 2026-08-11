@@ -1,0 +1,421 @@
+{
+ "active": false,
+ "connections": {
+  "Build Confirmation Email": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Respond Order Number",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Checkout Webhook": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Validate Input",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Create Order": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Insert Order Items",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Create Shipment": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Build Confirmation Email",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Fetch Catalog": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Price Order",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Insert Order Items": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Create Shipment",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Price Order": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Upsert Customer",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Respond Order Number": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Send Confirmation Email",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Upsert Customer": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Create Order",
+      "type": "main"
+     }
+    ]
+   ]
+  },
+  "Validate Input": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Fetch Catalog",
+      "type": "main"
+     }
+    ]
+   ]
+  }
+ },
+ "id": "fDOqhDGup7859mo3",
+ "name": "Brasa Commerce - Checkout & Order Confirmation",
+ "nodes": [
+  {
+   "id": "37ed2640-2a05-40e0-915c-259c3f9a337a",
+   "name": "Checkout Webhook",
+   "parameters": {
+    "httpMethod": "POST",
+    "options": {
+     "allowedOrigins": "*"
+    },
+    "path": "brasa-checkout",
+    "responseMode": "responseNode"
+   },
+   "position": [
+    0,
+    0
+   ],
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2.1,
+   "webhookId": "3f7d119a-48dc-4668-ae9d-4d923bf3efe0"
+  },
+  {
+   "id": "1f73d3bc-a64a-486e-b677-297e0dc6e257",
+   "name": "Validate Input",
+   "parameters": {
+    "jsCode": "// El navegador manda SKU y cantidad. NUNCA precios: los precios se\n// resuelven contra el catálogo en \"Price Order\". Si confiáramos en el\n// cliente, cualquiera compraría el sartén a un dólar editando la petición.\nconst b = $input.first().json.body || {};\nconst cust = b.customer || {};\nconst ship = b.shipping || {};\nconst items = Array.isArray(b.items) ? b.items : [];\n\nconst fail = (msg) => { throw new Error('checkout_invalid: ' + msg); };\n\nconst name = String(cust.full_name || '').trim();\nconst email = String(cust.email || '').trim().toLowerCase();\nif (name.length < 2) fail('missing full_name');\nif (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) fail('invalid email');\n\nconst req = ['line1', 'city', 'state', 'postal_code'];\nfor (const f of req) {\n  if (!String(ship[f] || '').trim()) fail('missing shipping.' + f);\n}\n\nif (items.length === 0) fail('empty cart');\nif (items.length > 20) fail('too many line items');\n\nconst clean = items.map((it) => {\n  const sku = String(it.sku || '').trim().toUpperCase();\n  const qty = Number(it.qty);\n  if (!sku) fail('line item without sku');\n  if (!Number.isInteger(qty) || qty < 1 || qty > 10) fail('bad qty for ' + sku);\n  return { sku, qty };\n});\n\n// Un mismo SKU repetido se colapsa en una sola línea.\nconst merged = {};\nfor (const it of clean) merged[it.sku] = (merged[it.sku] || 0) + it.qty;\n\n// ship_to (dirección) y, más adelante, shipping_cost (dinero) llevan nombres\n// distintos a propósito: cuando ambos se llamaban \"shipping\", el costo pisaba\n// la dirección al hacer spread y el pedido se creaba sin calle.\nreturn [{ json: {\n  customer: { full_name: name, email, phone: String(cust.phone || '').trim() },\n  ship_to: {\n    line1: String(ship.line1).trim(),\n    line2: String(ship.line2 || '').trim() || null,\n    city: String(ship.city).trim(),\n    state: String(ship.state).trim(),\n    postal_code: String(ship.postal_code).trim(),\n    country: String(ship.country || 'US').trim()\n  },\n  items: Object.entries(merged).map(([sku, qty]) => ({ sku, qty }))\n} }];"
+   },
+   "position": [
+    224,
+    0
+   ],
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2
+  },
+  {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
+   "id": "fc6d7f45-5877-4ebb-8c77-5397e7c45d3c",
+   "name": "Fetch Catalog",
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "nodeCredentialType": "supabaseApi",
+    "options": {},
+    "sendHeaders": true,
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/bc_product_catalog?active=eq.true&select=sku,product_name,price"
+   },
+   "position": [
+    448,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  },
+  {
+   "id": "997f9965-2c9a-4900-875b-f52be030cffd",
+   "name": "Price Order",
+   "parameters": {
+    "jsCode": "// Aquí es donde el precio se vuelve real: sale del catálogo, no del navegador.\nconst catalog = {};\nfor (const row of $input.all()) {\n  catalog[String(row.json.sku).toUpperCase()] = {\n    product_name: row.json.product_name,\n    unit_price: Number(row.json.price)\n  };\n}\n\nconst order = $('Validate Input').first().json;\n\nconst lines = order.items.map((it) => {\n  const p = catalog[it.sku];\n  if (!p) throw new Error('checkout_invalid: unknown or inactive sku ' + it.sku);\n  return {\n    sku: it.sku,\n    product_name: p.product_name,\n    unit_price: p.unit_price,\n    qty: it.qty,\n    line_total: Math.round(p.unit_price * it.qty * 100) / 100\n  };\n});\n\nconst subtotal = Math.round(lines.reduce((s, l) => s + l.line_total, 0) * 100) / 100;\n// Free shipping over $75 — la misma promesa que hace la barra de la tienda.\nconst shipping_cost = subtotal >= 75 ? 0 : 8;\nconst total = Math.round((subtotal + shipping_cost) * 100) / 100;\n\nreturn [{ json: { ...order, lines, subtotal, shipping_cost, total } }];"
+   },
+   "position": [
+    672,
+    0
+   ],
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2
+  },
+  {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
+   "id": "ad5497d9-b425-434a-819e-5fee36d9e755",
+   "name": "Upsert Customer",
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "resolution=merge-duplicates,return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify({ full_name: $json.customer.full_name, email: $json.customer.email, phone: $json.customer.phone }) }}",
+    "method": "POST",
+    "nodeCredentialType": "supabaseApi",
+    "options": {},
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/bc_customers?on_conflict=email"
+   },
+   "position": [
+    896,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  },
+  {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
+   "id": "d249d4c9-089f-41b8-af56-7737229c1108",
+   "name": "Create Order",
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify((() => {\n  const o = $('Price Order').first().json;\n  const row = $json;\n  const customerId = Array.isArray(row) ? row[0].id : row.id;\n  return {\n    customer_id: customerId,\n    subtotal: o.subtotal,\n    shipping: o.shipping_cost,\n    total: o.total,\n    ship_name: o.customer.full_name,\n    ship_line1: o.ship_to.line1,\n    ship_line2: o.ship_to.line2,\n    ship_city: o.ship_to.city,\n    ship_state: o.ship_to.state,\n    ship_postal_code: o.ship_to.postal_code,\n    ship_country: o.ship_to.country\n  };\n})()) }}",
+    "method": "POST",
+    "nodeCredentialType": "supabaseApi",
+    "options": {},
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/bc_orders"
+   },
+   "position": [
+    1120,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  },
+  {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
+   "id": "a506049f-8f73-49df-b0b6-7c5c5bbedb2e",
+   "name": "Insert Order Items",
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify((() => {\n  const row = $json;\n  const orderId = Array.isArray(row) ? row[0].id : row.id;\n  return $('Price Order').first().json.lines.map(l => ({\n    order_id: orderId, sku: l.sku, product_name: l.product_name,\n    unit_price: l.unit_price, qty: l.qty\n  }));\n})()) }}",
+    "method": "POST",
+    "nodeCredentialType": "supabaseApi",
+    "options": {},
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/bc_order_items"
+   },
+   "position": [
+    1344,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  },
+  {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
+   "executeOnce": true,
+   "id": "b4cb1a98-30f2-411c-b347-83009aa20a70",
+   "name": "Create Shipment",
+   "parameters": {
+    "authentication": "predefinedCredentialType",
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      },
+      {
+       "name": "Prefer",
+       "value": "return=representation"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify((() => {\n  const row = $('Create Order').first().json;\n  const order = Array.isArray(row) ? row[0] : row;\n  return { order_id: order.id };\n})()) }}",
+    "method": "POST",
+    "nodeCredentialType": "supabaseApi",
+    "options": {},
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/bc_shipments"
+   },
+   "position": [
+    1568,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  },
+  {
+   "id": "4be2a6ff-bb83-4b4b-8974-17d155f391fb",
+   "name": "Build Confirmation Email",
+   "parameters": {
+    "jsCode": "const o = $('Price Order').first().json;\nconst orderRow = $('Create Order').first().json;\nconst order = Array.isArray(orderRow) ? orderRow[0] : orderRow;\nconst shipRow = $input.first().json;\nconst shipment = Array.isArray(shipRow) ? shipRow[0] : shipRow;\n\nconst SITE = 'https://brasacommerce-web.netlify.app';\nconst trackUrl = SITE + '/#track/' + order.order_number;\n\nconst money = (n) => '$' + Number(n).toFixed(2);\nconst firstName = o.customer.full_name.split(' ')[0];\n\nconst etaLabel = new Date(shipment.eta_date + 'T00:00:00Z').toLocaleDateString('en-US', {\n  weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC'\n});\n\nconst rows = o.lines.map(l => `\n  <tr>\n    <td style=\"padding:12px 0;border-bottom:1px solid #EBE3D8;font-family:Arial,sans-serif;font-size:14px;color:#2C2C2C;\">\n      ${l.product_name}<br><span style=\"color:#8C7B70;font-size:12px;\">${l.sku} · Qty ${l.qty}</span>\n    </td>\n    <td align=\"right\" style=\"padding:12px 0;border-bottom:1px solid #EBE3D8;font-family:Arial,sans-serif;font-size:14px;color:#2C2C2C;white-space:nowrap;\">\n      ${money(l.line_total)}\n    </td>\n  </tr>`).join('');\n\nconst html = `<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"color-scheme\" content=\"light\"></head>\n<body style=\"margin:0;padding:0;background:#F5F0EA;\">\n<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\"><tr><td align=\"center\" style=\"padding:32px 16px;\">\n<table width=\"620\" cellpadding=\"0\" cellspacing=\"0\" style=\"max-width:620px;\">\n\n  <tr><td style=\"padding:20px 32px;text-align:center;\">\n    <img src=\"https://mjfvjogsknnuizsoygpp.supabase.co/storage/v1/object/public/assets/brasa-logo.svg\" alt=\"Brasa Commerce\" style=\"height:56px;width:auto;display:block;margin:0 auto;border:0;\">\n  </td></tr>\n\n  <tr><td style=\"background:#C2522A;padding:36px 32px;text-align:center;border-radius:12px 12px 0 0;\">\n    <div style=\"display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);border-radius:100px;padding:5px 18px;font-size:11px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;font-family:Arial,sans-serif;\">Order Confirmed</div>\n    <div style=\"font-family:Georgia,serif;font-size:30px;color:#fff;\">${order.order_number}</div>\n  </td></tr>\n\n  <tr><td style=\"background:#fff;padding:32px;\">\n    <p style=\"font-family:Arial,sans-serif;font-size:15px;color:#2C2C2C;margin:0 0 18px;\">Hi ${firstName}, thanks for your order. We're getting it ready now.</p>\n\n    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">${rows}\n      <tr><td style=\"padding:12px 0;font-family:Arial,sans-serif;font-size:14px;color:#8C7B70;\">Subtotal</td>\n          <td align=\"right\" style=\"padding:12px 0;font-family:Arial,sans-serif;font-size:14px;color:#2C2C2C;\">${money(o.subtotal)}</td></tr>\n      <tr><td style=\"padding:0 0 12px;font-family:Arial,sans-serif;font-size:14px;color:#8C7B70;\">Shipping</td>\n          <td align=\"right\" style=\"padding:0 0 12px;font-family:Arial,sans-serif;font-size:14px;color:#2C2C2C;\">${o.shipping_cost === 0 ? 'Free' : money(o.shipping_cost)}</td></tr>\n      <tr><td style=\"padding:12px 0;border-top:2px solid #2C2C2C;font-family:Georgia,serif;font-size:18px;color:#2C2C2C;\">Total</td>\n          <td align=\"right\" style=\"padding:12px 0;border-top:2px solid #2C2C2C;font-family:Georgia,serif;font-size:18px;color:#2C2C2C;\">${money(o.total)}</td></tr>\n    </table>\n\n    <p style=\"font-family:Arial,sans-serif;font-size:14px;color:#8C7B70;margin:24px 0 4px;\">Estimated delivery</p>\n    <p style=\"font-family:Georgia,serif;font-size:20px;color:#2C2C2C;margin:0 0 24px;\">${etaLabel}</p>\n\n    <p style=\"font-family:Arial,sans-serif;font-size:14px;color:#8C7B70;margin:0 0 4px;\">Shipping to</p>\n    <p style=\"font-family:Arial,sans-serif;font-size:14px;color:#2C2C2C;margin:0 0 28px;line-height:1.5;\">\n      ${o.customer.full_name}<br>${o.ship_to.line1}${o.ship_to.line2 ? '<br>' + o.ship_to.line2 : ''}<br>${o.ship_to.city}, ${o.ship_to.state} ${o.ship_to.postal_code}\n    </p>\n\n    <table cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 auto;\"><tr>\n      <td style=\"background:#2C2C2C;border-radius:100px;\">\n        <a href=\"${trackUrl}\" style=\"display:inline-block;padding:14px 34px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;color:#fff;text-decoration:none;\">Track your order</a>\n      </td>\n    </tr></table>\n\n    <p style=\"font-family:Arial,sans-serif;font-size:12px;color:#8C7B70;margin:20px 0 0;text-align:center;\">\n      Keep this number handy — <strong>${order.order_number}</strong> is how you look up your order.\n    </p>\n  </td></tr>\n\n  <tr><td style=\"background:#F5F0EA;padding:22px 32px;text-align:center;border-radius:0 0 12px 12px;\">\n    <p style=\"font-family:Arial,sans-serif;font-size:12px;color:#8C7B70;margin:0;\">Brasa Commerce LLC · Chicago, IL</p>\n  </td></tr>\n\n</table></td></tr></table></body></html>`;\n\nreturn [{ json: {\n  from: 'onboarding@resend.dev',\n  to: o.customer.email,\n  subject: 'Order confirmed · ' + order.order_number + ' — Brasa Commerce',\n  html,\n  order_number: order.order_number,\n  total: o.total,\n  eta_date: shipment.eta_date\n} }];"
+   },
+   "position": [
+    1792,
+    0
+   ],
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2
+  },
+  {
+   "id": "0112da11-9ba7-4056-87c8-d036b4715ee6",
+   "name": "Respond Order Number",
+   "parameters": {
+    "options": {},
+    "respondWith": "json",
+    "responseBody": "={{ JSON.stringify((() => {\n  const e = $('Build Confirmation Email').first().json;\n  return { success: true, order_number: e.order_number, total: e.total, eta_date: e.eta_date };\n})()) }}"
+   },
+   "position": [
+    2016,
+    0
+   ],
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1
+  },
+  {
+   "id": "8deca6c6-fd18-4cc3-b7c8-74825d798f41",
+   "name": "Send Confirmation Email",
+   "onError": "continueRegularOutput",
+   "parameters": {
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "Authorization",
+       "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+      },
+      {
+       "name": "Content-Type",
+       "value": "application/json"
+      }
+     ]
+    },
+    "jsonBody": "={{ JSON.stringify((() => {\n  const e = $('Build Confirmation Email').first().json;\n  return { from: e.from, to: [e.to], subject: e.subject, html: e.html };\n})()) }}",
+    "method": "POST",
+    "options": {},
+    "sendBody": true,
+    "sendHeaders": true,
+    "specifyBody": "json",
+    "url": "https://api.resend.com/emails"
+   },
+   "position": [
+    2240,
+    0
+   ],
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2
+  }
+ ],
+ "settings": {
+  "availableInMCP": true,
+  "binaryMode": "separate",
+  "executionOrder": "v1"
+ }
+}

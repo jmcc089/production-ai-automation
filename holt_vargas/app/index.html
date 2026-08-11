@@ -240,8 +240,10 @@
       <div class="stat-card"><div class="stat-label">Open Cases</div><div class="stat-value" id="stat-total">&mdash;</div><div class="stat-sub">in the system</div></div>
       <div class="stat-card"><div class="stat-label">Awaiting Documents</div><div class="stat-value" id="stat-pending">&mdash;</div><div class="stat-sub">review not finished</div></div>
       <div class="stat-card"><div class="stat-label">Ready for Attorney</div><div class="stat-value" id="stat-ready">&mdash;</div><div class="stat-sub">documents complete</div></div>
+      <div class="stat-card"><div class="stat-label">Needs a Human</div><div class="stat-value" id="stat-human">&mdash;</div><div class="stat-sub">automated review did not settle it</div></div>
       <div class="stat-card"><div class="stat-label">Clients</div><div class="stat-value" id="stat-clients">&mdash;</div><div class="stat-sub">people on file</div></div>
     </div>
+    <div id="needs-human"></div>
     <div class="filters" id="type-filters">
       <button class="filter-btn active" data-type="all">All types</button>
       <button class="filter-btn" data-type="Family Visa">Family Visa</button>
@@ -401,6 +403,7 @@
       renderAccessWarning();
       renderSignedInUser();
       updateStats();
+      renderNeedsHuman();
       renderQueue();
       renderPipeline();
       renderClients();
@@ -459,6 +462,56 @@
     document.getElementById('stat-ready').textContent =
       active.filter(c => review(c).overall_completeness === 'Complete').length;
     document.getElementById('stat-clients').textContent = allClients.length;
+    document.getElementById('stat-human').textContent = needsHuman().length;
+  }
+
+  /* Intakes the automation could not settle on its own. Until this existed they were
+     flagged in the database and mailed to a paralegal, and then nothing tracked whether
+     anyone acted: the only queue was somebody's inbox. This is not a task queue - there
+     is no assignment and no due date - but it turns "I hope someone saw that" into a
+     list you can count. */
+  function needsHuman() {
+    return allCases
+      .filter(c => ['Closed', 'Denied'].indexOf(c.status) === -1)
+      .map(c => ({ c: c, r: review(c) }))
+      .filter(x => x.r.completeness_label === 'Unknown' || x.r.priority_flag === true)
+      .map(x => {
+        /* Say which of the four it is. They need different things from a person. */
+        var why;
+        if (x.r.completeness_score == null && /never answered|did not respond/i.test(x.r.ai_summary || '')) {
+          why = 'The model did not answer &mdash; nobody has read these documents yet';
+        } else if (x.r.completeness_score == null && /nothing to review|described no documents/i.test(x.r.ai_summary || '')) {
+          why = 'The form arrived with no description &mdash; the client was asked what they hold';
+        } else if (x.r.completeness_score == null) {
+          why = 'No score could be produced &mdash; read the notes before trusting anything here';
+        } else {
+          why = 'Flagged for a paralegal &mdash; see the notes on the case';
+        }
+        return { c: x.c, r: x.r, why: why };
+      })
+      .sort((a, b) => String(b.c.created_at).localeCompare(String(a.c.created_at)));
+  }
+
+  function renderNeedsHuman() {
+    const list = needsHuman();
+    document.getElementById('needs-human').innerHTML = !list.length ? '' :
+      '<div class="queue-card" style="border-left:4px solid var(--gold);margin-bottom:20px;">' +
+      '<div class="queue-header"><span class="queue-title">Needs a human &mdash; ' + list.length + '</span>' +
+      '<span class="status-text">the automated review did not settle these</span></div>' +
+      '<div style="padding:4px 0;">' +
+      list.map(x =>
+        '<div style="padding:12px 20px;border-bottom:1px solid var(--border);cursor:pointer;" data-case="' + esc(x.c.id) + '" class="nh-row">' +
+        '<div style="font-weight:bold;color:var(--navy);">' + esc((x.c.hvl_clients && x.c.hvl_clients.full_name) || 'Unknown client') +
+        ' <span style="font-weight:normal;color:#6b7280;">&middot; ' + esc(x.c.case_type || '\u2014') + '</span></div>' +
+        '<div style="font-size:13px;color:#444;margin-top:3px;">' + x.why + '</div>' +
+        '</div>').join('') +
+      '</div></div>';
+    Array.prototype.forEach.call(document.querySelectorAll('.nh-row'), function (el) {
+      el.addEventListener('click', function () {
+        const c = allCases.find(x => x.id === el.getAttribute('data-case'));
+        if (c) buildPanel(c);
+      });
+    });
   }
 
   /* ---------- QUEUE ---------- */

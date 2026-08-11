@@ -1,13 +1,20 @@
-# workflow/ — the n8n workflow, in version control
+# workflows/ — every n8n workflow on the shared instance, in version control
 
-`intake.json` is the live workflow, exported and normalised. `sync.py` moves it in either
-direction and tells you when the two have diverged.
+The four workflows this instance runs, exported and normalised, plus `sync.py` to move them
+in either direction and tell you when the running system has drifted from what is committed.
 
-**It is one workflow.** Until 2026-08-10 the failure recorder was a second one, pointed at by
-`settings.errorWorkflow`. Its three nodes — `Error Trigger` → `Classify Failure` →
-`Record Failure` — now sit on this canvas and the pointer aims at the workflow itself, which
-n8n permits and which Cedar already did. The split was what once allowed the recorder to be
-inactive while reporting no problem at all.
+| file | workflow | nodes | |
+|---|---|---|---|
+| `holt-intake.json` | Holt & Vargas — Document Intake | 32 | active |
+| `cedar-intake.json` | Cedar Healthcare — Intake Triage | 24 | active |
+| `brasa-support.json` | Brasa Commerce — Support Desk | 53 | active |
+| `brasa-checkout.json` | Brasa Commerce — Checkout & Order Confirmation | 11 | **archived** |
+
+**Holt is one workflow, not two.** Until 2026-08-10 the failure recorder was separate, pointed
+at by `settings.errorWorkflow`. Its three nodes — `Error Trigger` → `Classify Failure` →
+`Record Failure` — now sit on the intake canvas and the pointer aims at the workflow itself,
+which n8n permits and which Cedar already did. The split was what once allowed the recorder to
+be inactive while reporting no problem at all.
 
 ```bash
 export N8N_API_KEY=...            # an n8n public-API key
@@ -20,7 +27,7 @@ python3 sync.py push              # live := repo, to deploy or to restore
 
 ## Why this exists
 
-On **2026-08-09** the live intake workflow silently reverted to an older revision. Five nodes
+On **2026-08-09** Holt's live intake workflow silently reverted to an older revision. Five nodes
 and the entire execution record vanished, and the model call narrowed from 45 s / 5 000 tokens
 to 25 s / 3 000 — which, measured afterwards, was failing the *majority* of ordinary intakes.
 
@@ -34,6 +41,14 @@ The cause was identifiable — `IF Guard Passed` had its `typeValidation` renumb
 save, so a canvas session carrying stale state had been saved over the top. But the reason it
 went unnoticed for hours, and nearly unrecovered, is that **the workflow existed in exactly one
 place and had no history**. There was no diff to read and nothing to compare against.
+
+Cedar and Brasa sat on the same instance, exposed to exactly the same accident, with nothing
+watching. That is why all four are here and not only the one that was bitten.
+
+`brasa-checkout.json` is **archived**, and n8n refuses writes to an archived workflow — `push`
+says so instead of failing. `check` still reads it, which is the point: the workflow nobody
+looks at is the one that breaks silently the day it is switched back on. It already nearly did:
+it was still reading a Railway variable that was about to be deleted.
 
 `check` is the answer to that, and it is worth running before any debugging session: *is the
 thing I am about to debug the thing this repository describes?*

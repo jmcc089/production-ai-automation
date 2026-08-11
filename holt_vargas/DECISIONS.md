@@ -262,10 +262,27 @@ can never be deleted — correct for an audit trail, and the reason departure is
   same gap swallows conditional rows such as `I-751 if applicable`. `documents_optional` exists in
   the model contract and currently only feeds `offcatalogue`; it is the natural home for this state.
   **Closing it needs the firm's rules first — which related documents satisfy which rows — not code
-  first.** Open, and escalated rather than patched.
-- **No authentication on the intake webhook.** Anyone who knows the URL can submit an intake. The
-  `Guard` bounds the damage — a malformed request costs four nodes and no model call — but a
-  *well-formed* request still costs a DeepSeek call and writes a row. Nothing rate-limits this.
+  first.**
+
+  *Decided 2026-08-11: an I-130 receipt notice does **not** satisfy `Petition I-130`.* The current
+  behaviour is therefore correct and nothing changes: the client is asked for the petition and the
+  paralegal is told, in `ai_notes`, that a receipt notice was mentioned. The reasoning is the one
+  this whole build runs on — asking for a document the client may already have is recoverable;
+  accepting one they do not have is not. The holdout case `h-family-visa-petitioner-resident` still
+  fails on `present_includes: ["Petition I-130"]`, because that expectation encodes the opposite
+  judgement, written before anyone asked. It is left failing and labelled rather than edited to
+  match: **a holdout that is corrected to agree with the system stops measuring it.**
+
+  The third state itself stays open, for conditional rows such as `I-751 if applicable`, which are
+  still demanded of every client who does not affirmatively claim them.
+- **No authentication on the intake webhook, until a variable is set.** The `Guard` gained a
+  shared-secret check on 2026-08-11 — a hidden Tally field compared against
+  `$env.HVL_INTAKE_SECRET`, rejected in ~70 ms before the model — but it is **inert while the
+  variable is unset**, and says so in `guard_notes` on every run rather than leaving it to be
+  assumed. Until the owner sets it and adds the Tally field, anyone who knows the URL can submit an
+  intake: the `Guard` bounds the damage — a malformed request costs four nodes and no model call —
+  but a *well-formed* request still costs a DeepSeek call and writes a row. **Nothing rate-limits
+  this even once the secret is on.**
 - **`active` is not enforced at assignment time** (see 4).
 - **Deliverability is not verified** (see 7).
 - **No mechanism stops a paralegal reading another paralegal's client** (see 9).

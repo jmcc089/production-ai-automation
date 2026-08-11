@@ -10,7 +10,8 @@ project write-up; this file is only what to type when something needs doing.
 | Entry point | Railway | `POST https://n8n-production-3503.up.railway.app/webhook/hvl-intake` |
 | Database | Supabase | project `mjfvjogsknnuizsoygpp`, tables prefixed `hvl_` |
 | Model | DeepSeek | `deepseek-v4-flash`, `max_tokens` 5000, timeout 90 s, one retry, fails sideways not fatally |
-| Mail | Resend | sender `intake@mail.mcruz-portfolio.space` |
+| Mail | Resend | sender `intake@mail.mcruz-portfolio.space`, key still a Railway variable — see `SECURITY.md` for why that is fine |
+| Intake secret | Railway | `HVL_INTAKE_SECRET`, checked by the `Guard`. **Unset by default, and then the check does not run** |
 
 **n8n is shared with Cedar Healthcare and Brasa Commerce.** Anything that stops the n8n service
 stops those two as well. Restarting it is never a casual action.
@@ -82,14 +83,15 @@ and every observable the intake probe checks was still correct. See `INCIDENTS.m
 ```bash
 export N8N_API_KEY=...
 export N8N_BASE=https://n8n-production-3503.up.railway.app
-python3 workflow/sync.py check
+python3 ../n8n/workflows/sync.py check
 ```
 
-Healthy is one line saying `matches repo` and exit 0. Anything else prints the nodes that differ
+Healthy is four lines saying `matches repo` and exit 0. Anything else prints the nodes that differ
 by name and a diff, and exits 1.
 
-This compares the live workflow against `workflow/intake.json` in this repository, so it checks
-**everything** — not a handful of values somebody thought to list.
+It compares **all four** workflows on the shared instance against `n8n/workflows/*.json`, so it
+checks everything — not a handful of values somebody thought to list, and not only this build.
+Cedar and Brasa run on the same n8n and were exposed to the same accident.
 The earlier version of this section hand-checked node count, writer count, timeout, `max_tokens` and
 `errorWorkflow`; it would have caught the 2026-08-09 revert and would have missed any change to a
 node's code.
@@ -99,6 +101,9 @@ and undoing half of it is worse than undoing none: on 2026-08-09 the five missin
 re-added without the `$('Guard')` references they depend on, and the workflow rejected every valid
 intake until it was rolled back. Decide which side is right, then `sync.py pull` (live was right) or
 `sync.py push` (repo was right), and drive an intake afterwards.
+
+**`brasa-checkout.json` is archived**, and n8n refuses writes to an archived workflow. `check`
+still reads it; `push` says so and skips it rather than dying.
 
 
 ---

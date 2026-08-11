@@ -29,13 +29,25 @@ import urllib.error
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# One workflow, not two. The failure recorder used to be a separate workflow pointed at by
-# `settings.errorWorkflow`; on 2026-08-10 its three nodes were folded onto this canvas and
-# the pointer aimed at the workflow itself, which n8n permits and Cedar already relied on.
-# The split was what once let the recorder sit inactive while reporting no problem.
+# Every workflow on the shared instance. Holt was put here first because Holt is the one
+# that silently reverted; Cedar and Brasa sit on the same n8n and were exposed to exactly
+# the same accident with nothing watching.
+#
+# Holt is one workflow, not two: the failure recorder used to be separate, pointed at by
+# `settings.errorWorkflow`. On 2026-08-10 its three nodes were folded onto the intake canvas
+# and the pointer aimed at the workflow itself, which n8n permits and Cedar already did. The
+# split was what once let the recorder sit inactive while reporting no problem.
 WORKFLOWS = {
-    "intake.json": "xurYOv7EzKPumZq0",
+    "holt-intake.json": "xurYOv7EzKPumZq0",
+    "cedar-intake.json": "lj0aSfymkMyVOBRZ",
+    "brasa-support.json": "1Ta9kHrR2dk8akKd",
+    "brasa-checkout.json": "fDOqhDGup7859mo3",
 }
+
+# n8n refuses writes to an archived workflow — PUT returns 400 "Cannot update an archived
+# workflow". `check` still reads them, which is the point: an archived workflow is exactly
+# the one nobody looks at until the day it is switched back on.
+ARCHIVED_OK = {"brasa-checkout.json"}
 
 # Fields n8n changes on its own — timestamps, version counters, ownership. Keeping them
 # would make every diff noise and hide the one line that matters.
@@ -159,6 +171,9 @@ def cmd_push():
         body["settings"] = settings
         status, resp = api("PUT", f"/api/v1/workflows/{wid}", body)
         if status != 200:
+            if fname in ARCHIVED_OK and "archived" in str(resp).lower():
+                print(f"  {fname:<24} ARCHIVED — unarchive it in n8n first, then push again")
+                continue
             sys.exit(f"{fname}: PUT returned {status} {str(resp)[:300]}")
         _, after = api("GET", f"/api/v1/workflows/{wid}")
         ok = dump(after) == dump(want)

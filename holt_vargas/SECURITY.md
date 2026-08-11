@@ -12,8 +12,18 @@ excuse attached; an excuse a reviewer can refute costs more trust than the gap i
 ## 1 · What is reachable with no credentials at all
 
 **`POST https://n8n-production-3503.up.railway.app/webhook/hvl-intake`** — the intake endpoint.
-No authentication (`authentication: NONE` on the webhook node), no rate limit, no shared secret,
-no signature check. Anyone who knows the URL can submit an intake.
+No authentication on the webhook node itself (`authentication: NONE`), no rate limit, no signature
+check.
+
+*Since 2026-08-11 there is a shared-secret check in the `Guard`*: it compares a hidden Tally field
+against `$env.HVL_INTAKE_SECRET` and rejects a mismatch in ~70 ms, before the model call and before
+any email. **It is inert until that variable is set**, deliberately — shipping a closed gate before
+Tally was sending the field would have refused every real intake. While unset, every run records
+*"HVL_INTAKE_SECRET is not set, so the shared-secret check did not run"* in `guard_notes`, so which
+state a run was in is checkable in the database rather than assumed. **An unset secret is not
+protection, and until the owner sets it everything below applies unchanged.**
+
+It is also not rate limiting. Somebody holding the secret can still drive unlimited intakes.
 
 What that is worth to an attacker, stated concretely:
 
@@ -139,7 +149,7 @@ them the cost is not the reason they are absent.
 
 | Missing | Cost to close |
 |---|---|
-| **Authentication on the intake webhook.** Anyone with the URL can submit. | Free. n8n webhooks support Header Auth natively; Tally can send a static header. Under an hour. It is absent because nobody added it, not because it was expensive. |
+| **Authentication on the intake webhook.** Anyone with the URL can submit. | **Half done, 2026-08-11.** The `Guard` checks a shared secret; it does nothing until `HVL_INTAKE_SECRET` is set in Railway and Tally sends the matching hidden field. Both are the owner's to do, and until then this row is unchanged. |
 | **Rate limiting.** Nothing bounds valid-looking submissions, model spend, or outbound email. | Not free at the n8n layer — needs a proxy (Cloudflare in front of the Railway domain) or a counter in Postgres checked by the `Guard`. The Postgres counter is a couple of hours and would work today. |
 | **Recipient allow-listing.** The client email goes to whatever address the request supplies. | Free — a check in `Guard`. Deliberately not added: the build's purpose is to confirm receipt to real clients, and allow-listing would defeat it. The correct control is authentication on the webhook, above. |
 | **Bounce and complaint handling.** A syntactically valid address at a dead domain bounces silently; the send log already contains such bounces from a sibling build. | A Resend webhook plus a suppression table. Half a day. |
