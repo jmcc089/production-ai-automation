@@ -280,6 +280,10 @@
 
         <script>
             const SUPABASE_URL = "__SUPABASE_URL__";
+            // Netlify sustituye esto en el build. Debe ser la clave **publishable**
+            // (`sb_publishable_...`), no la `anon` legacy en JWT: desactivar la `service_role` legacy
+            // desactiva la `anon` con ella — son un solo interruptor — y eso tumbó los cuatro front ends
+            // el 2026-08-11.
             const SUPABASE_KEY = "__SUPABASE_KEY__";
             const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
