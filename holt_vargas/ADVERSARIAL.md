@@ -136,5 +136,30 @@ only `catalogue_present` and `catalogue_missing`, both produced as `catalogue.fi
 string the model composes can reach a client whatever it is persuaded to return. That is the claim
 `DECISIONS.md` §1 makes, and this is it holding under attack rather than being argued from the code.
 
+---
+
+## Where the three builds stand on injected markup, 2026-08-11
+
+The same two probes have now been fired at all three, so the comparison is measured rather than
+assumed. Each row is the *delivered* email read back out of Resend, plus the deployed dashboard
+source.
+
+| | staff email | client email | dashboard |
+|---|---|---|---|
+| **Holt & Vargas** | escaped | escaped | `esc()` at 43 interpolations |
+| **Brasa Commerce** | escaped | escaped | `esc()` at 11 |
+| **Cedar Healthcare** | **not escaped — open** | not escaped | `esc()` at 46, fixed `47dfe53` |
+
+Holt is the only one of the three that escapes in every place a stranger's text is rendered. Cedar's
+dashboard was fixed after its stored-XSS finding and its **emails were not**; a live re-probe on
+2026-08-11 delivered `<img src=x onerror=…>` and a link to an attacker domain as working HTML in a
+Cedar-branded email to a clinician. Brasa passes on the path that was probed, and has one email node
+— `Build Confirmation Email`, on the unauthenticated checkout path — with no escaping and no probe
+against it yet.
+
+Holt's own limit is unchanged and is the subject line, not the body: `Build Paralegal Email`
+interpolates `full_name` into the subject raw. Subjects are plain text, so there is nothing to
+execute, but the same is true of Cedar's and it is worth knowing rather than discovering.
+
 *Executed against the running system on 2026-08-08. Every "what happened" above means observed on
 that date.*

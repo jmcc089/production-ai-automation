@@ -144,6 +144,26 @@ Treat gaps as likely and report them.
 
 ---
 
+## One probe, three builds
+
+The same two payloads — markup in the name, markup plus an attacker link in the message — have been
+fired at all three production webhooks and the **delivered** email read back out of Resend. It is
+the only comparison in this repository where the three are measured against an identical test.
+
+| | staff email | client email | dashboard |
+|---|---|---|---|
+| `holt_vargas/` | escaped | escaped | escaped |
+| `brasa_commerce/` | escaped | escaped | escaped |
+| `cedar_healthcare/` | **not escaped — open** | not escaped | escaped, fixed `47dfe53` |
+
+Cedar's dashboard was fixed after a stored-XSS finding; its emails were not, and a re-probe on
+2026-08-11 delivered a live `<a href>` to an attacker domain inside a Cedar-branded email to a
+clinician. Brasa passes on the path that was probed and has one unprobed email node with no
+escaping, on the unauthenticated checkout path. Details in each build's `ADVERSARIAL.md`.
+
+The probe rows are **kept in the database on purpose**, with their payloads intact. A finding whose
+evidence has been tidied into a plausible-looking customer name is a sentence with nothing behind it.
+
 ## Brasa Commerce, in more detail
 
 The most thoroughly documented build, and the only one with a public write path that takes money-shaped

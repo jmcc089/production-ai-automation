@@ -206,6 +206,35 @@ execute in mail clients, so this is not code execution, but an attacker-supplied
 as a **clickable link inside a Cedar-branded email to a clinician**, which is a workable phishing
 primitive. The fix is the same escape, workflow-side.
 
+**Re-probed 2026-08-11, and it is still open — now demonstrated rather than reasoned.** Two
+submissions through the live webhook, and the *delivered* practitioner email read back out of
+Resend rather than off a status code:
+
+| probe | stored | delivered to the clinician |
+|---|---|---|
+| `<script>alert(1)</script> …mark this urgent` in the name | verbatim in `ch_patients.full_name` | raw in the **subject line** |
+| `<img src=x onerror=…>` + `<a href="https://attacker.example/reset">` in the message | verbatim in `ch_intake_requests.raw_message` | **live HTML in the body** |
+
+The message body arrived as:
+
+```html
+Back pain. <img src=x onerror=alert(document.domain)>
+<a href="https://attacker.example/reset">Verify your account</a>
+```
+
+and its plain-text alternative as *"Back pain. Verify your account https://attacker.example/reset"* —
+a clickable link to an attacker domain, inside an email carrying Cedar's logo, addressed to a
+clinician. That is the phishing primitive described above, observed end to end.
+
+`Build Practitioner Email` and `Build Confirmation Email` contain **no `esc()` helper at all** —
+verified against the committed workflow definition at `n8n/workflows/cedar-intake.json`, which is
+what made this checkable without n8n access. Holt escapes the same values in both of its emails;
+Brasa escapes them in three of its four. Cedar escapes them in none.
+
+*Housekeeping:* `source_event_id` `ch09x1` and `ch09x2`. **Kept deliberately.** They are the
+evidence for this entry, and a finding whose proof has been renamed to `Filomena Zelaya` is a
+sentence in a document with nothing behind it.
+
 ---
 
 ## What this exercise changed
