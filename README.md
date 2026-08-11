@@ -28,6 +28,7 @@ hour.
 | Service | Used for | Free tier sufficient |
 |---|---|---|
 | Supabase | Postgres, auth, RLS | yes |
+| | *front ends use the **publishable** key `sb_publishable_…`, not the legacy `anon` JWT — disabling the legacy `service_role` disables `anon` with it, and that took all four dashboards down on 2026-08-11* | |
 | n8n (self-hosted on Railway) | the workflows | Railway is paid; n8n itself is free |
 | Deepseek | classification | pay per call, cents |
 | Resend | transactional email | yes, but sending to arbitrary addresses needs a verified domain |
