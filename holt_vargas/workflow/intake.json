@@ -404,19 +404,18 @@
    "typeVersion": 1
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "ee54ce69-ab3a-4311-8fbd-ef0ad4054019",
    "name": "Upsert Client",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -429,6 +428,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ full_name: $('Set Fields').first().json.full_name, email: $('Set Fields').first().json.email, phone: $('Set Fields').first().json.phone, country_of_origin: $('Set Fields').first().json.country_of_origin, preferred_language: $('Parse Deepseek Response').first().json.preferred_language }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "timeout": 15000
     },
@@ -458,19 +458,18 @@
    "typeVersion": 2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "b45b5834-b08e-4482-bda6-731c6f21b3be",
    "name": "Upsert Case",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -483,6 +482,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ client_id: $('Extract Client ID').first().json.client_id, case_type: $('Set Fields').first().json.case_type, paralegal_id: $('Assign Paralegal').first().json.paralegal_id }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "timeout": 15000
     },
@@ -512,19 +512,18 @@
    "typeVersion": 2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "28893028-46aa-439e-9fec-b08adaa8b34e",
    "name": "Insert Document Review",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -537,6 +536,7 @@
     },
     "jsonBody": "={{ JSON.stringify({\n  source_event_id: $('Guard').first().json.source_event_id,\n  case_id: $('Extract Case ID').first().json.case_id,\n  client_id: $('Extract Client ID').first().json.client_id,\n  document_description: $('Set Fields').first().json.document_description,\n  completeness_score: $('Parse Deepseek Response').first().json.completeness_score ?? null,\n  completeness_label: $('Parse Deepseek Response').first().json.completeness_label ?? 'Unknown',\n  documents_ready: $('Parse Deepseek Response').first().json.catalogue_present ?? [],\n  documents_unready: $('Parse Deepseek Response').first().json.catalogue_missing ?? [],\n  documents_received: $('Parse Deepseek Response').first().json.catalogue_present ?? [],\n  documents_missing: $('Parse Deepseek Response').first().json.catalogue_missing ?? [],\n  ai_summary: $('Parse Deepseek Response').first().json.ai_summary ?? '',\n  ai_notes: $('Parse Deepseek Response').first().json.ai_notes ?? '',\n  confidence_level: $('Parse Deepseek Response').first().json.confidence_level ?? null,\n  notes: $('Parse Deepseek Response').first().json.ai_summary ?? ''\n}) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "timeout": 15000
     },
@@ -627,26 +627,26 @@
    "typeVersion": 2
   },
   {
+   "credentials": {
+    "deepSeekApi": {
+     "id": "g9bJtYABZLxpemuY",
+     "name": "DeepSeek account"
+    }
+   },
    "id": "8f77bb79-2575-4d1f-ab9c-b95971045a80",
    "maxTries": 2,
    "name": "Deepseek API",
    "onError": "continueErrorOutput",
    "parameters": {
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.DEEPSEEK_API_KEY}}"
-      }
-     ]
-    },
+    "authentication": "predefinedCredentialType",
     "jsonBody": "={{ JSON.stringify({ model: 'deepseek-v4-flash', messages: [{ role: 'user', content: $json.deepseek_body }], max_tokens: 5000 }) }}",
     "method": "POST",
+    "nodeCredentialType": "deepSeekApi",
     "options": {
      "timeout": 90000
     },
     "sendBody": true,
-    "sendHeaders": true,
+    "sendHeaders": false,
     "specifyBody": "json",
     "url": "https://api.deepseek.com/chat/completions"
    },
@@ -715,25 +715,21 @@
    "typeVersion": 4.4
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "af8f2501-36f9-420e-a892-dc14beea4516",
    "name": "Fetch Paralegals",
    "parameters": {
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      }
-     ]
-    },
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "timeout": 15000
     },
-    "sendHeaders": true,
+    "sendHeaders": false,
     "url": "https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_attorneys?role=eq.Paralegal&active=eq.true&select=id,full_name,specializations"
    },
    "position": [
@@ -821,21 +817,17 @@
    "typeVersion": 1.5
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "a0000001-0000-4000-8000-000000000004",
    "name": "Check Existing Review",
    "parameters": {
-    "headerParameters": {
-     "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      }
-     ]
-    },
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -844,7 +836,7 @@
      },
      "timeout": 15000
     },
-    "sendHeaders": true,
+    "sendHeaders": false,
     "url": "={{ 'https://mjfvjogsknnuizsoygpp.supabase.co/rest/v1/hvl_document_reviews?select=id&limit=1&source_event_id=eq.' + encodeURIComponent($('Guard').first().json.source_event_id) }}"
    },
    "position": [
@@ -906,20 +898,19 @@
    "typeVersion": 1.5
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "c0000001-0000-4000-8000-000000000001",
    "name": "Log Run Start",
    "onError": "continueRegularOutput",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -932,6 +923,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: String($execution.id), webhook: 'hvl-intake', source_event_id: $('Guard').first().json.source_event_id || null, status: 'started', stage: 'guard', started_at: $now.toISO() }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -953,20 +945,19 @@
    "typeVersion": 4.2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "c0000001-0000-4000-8000-000000000002",
    "name": "Log Run Rejected",
    "onError": "continueRegularOutput",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -979,6 +970,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: String($execution.id), status: 'rejected', stage: 'guard', finished_at: $now.toISO(), error_message: ($('Guard').first().json.guard_reasons || []).join('; ') }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -1000,20 +992,19 @@
    "typeVersion": 4.2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "c0000001-0000-4000-8000-000000000003",
    "name": "Log Run Duplicate",
    "onError": "continueRegularOutput",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -1026,6 +1017,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: String($execution.id), status: 'ok', stage: 'duplicate', finished_at: $now.toISO() }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -1047,20 +1039,19 @@
    "typeVersion": 4.2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "c0000001-0000-4000-8000-000000000004",
    "name": "Log Run Classified",
    "onError": "continueRegularOutput",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -1073,6 +1064,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: String($execution.id), stage: 'classified', case_type: $('Parse Deepseek Response').first().json.case_type || null, completeness_score: $('Parse Deepseek Response').first().json.completeness_score, completeness_label: $('Parse Deepseek Response').first().json.completeness_label, confidence_level: $('Parse Deepseek Response').first().json.confidence_level, priority_flag: $('Parse Deepseek Response').first().json.priority_flag, contract_violated: $('Parse Deepseek Response').first().json.contract_violated, model: 'deepseek-v4-flash', prompt_tokens: ($('Parse Deepseek Response').first().json.deepseek_raw_response||{}).usage?.prompt_tokens ?? null, completion_tokens: ($('Parse Deepseek Response').first().json.deepseek_raw_response||{}).usage?.completion_tokens ?? null, total_tokens: ($('Parse Deepseek Response').first().json.deepseek_raw_response||{}).usage?.total_tokens ?? null }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -1094,20 +1086,19 @@
    "typeVersion": 4.2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "c0000001-0000-4000-8000-000000000005",
    "name": "Log Run OK",
    "onError": "continueRegularOutput",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -1120,6 +1111,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: String($execution.id), status: 'ok', stage: 'sent', finished_at: $now.toISO(), client_id: $('Extract Client ID').first().json.client_id || null, case_id: $('Extract Case ID').first().json.case_id || null, review_id: ($('Insert Document Review').first().json || {}).id || null }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {
@@ -1199,19 +1191,18 @@
    "typeVersion": 2
   },
   {
+   "credentials": {
+    "supabaseApi": {
+     "id": "WNlqq45W3WRAgSIe",
+     "name": "Supabase account"
+    }
+   },
    "id": "b0000001-0000-4000-8000-000000000003",
    "name": "Record Failure",
    "parameters": {
+    "authentication": "predefinedCredentialType",
     "headerParameters": {
      "parameters": [
-      {
-       "name": "apikey",
-       "value": "={{ $env.SUPABASE_SERVICE_KEY}}"
-      },
-      {
-       "name": "Authorization",
-       "value": "=Bearer {{ $env.SUPABASE_SERVICE_KEY}}"
-      },
       {
        "name": "Content-Type",
        "value": "application/json"
@@ -1224,6 +1215,7 @@
     },
     "jsonBody": "={{ JSON.stringify({ n8n_execution_id: $json.n8n_execution_id, webhook: 'hvl-intake', status: $json.status, stage: $json.stage, error_node: $json.error_node, error_message: $json.error_message, finished_at: $json.finished_at }) }}",
     "method": "POST",
+    "nodeCredentialType": "supabaseApi",
     "options": {
      "response": {
       "response": {

@@ -75,58 +75,53 @@ verified by scanning the working tree **and the full git history** (`git log --a
 `sk-`, `re_` and `sb_secret` patterns. The dashboards ship `__SUPABASE_URL__` / `__SUPABASE_KEY__`
 placeholders substituted at deploy time.
 
-**The service_role key is exposed in failed executions, and this is the most serious item in this
-file.**
+**The service_role key was exposed in failed executions. Closed 2026-08-11.**
 
-The Supabase HTTP nodes send the key in two headers, `apikey` and `Authorization`. When a node
-errors, n8n saves the request context into the execution record and redacts `authorization` to
-`**hidden**` — but **not** `apikey`, which carries the same token.
-
-*Re-confirmed for this build on 2026-08-10.* Executions **628, 629 and 630** (all 2026-08-08,
-`Upsert Client` failing) each hold a readable `service_role` JWT at
-`resultData.error.context.request.headers.apikey`, with `authorization` redacted two lines above it.
-Three of this workflow's eight stored error executions.
-
-`service_role` bypasses RLS entirely, so anyone who can read those executions has every client
-record regardless of the policies in section 3. **Shared with Cedar and Brasa: one n8n instance, one
-key, three projects.**
+The Supabase HTTP nodes sent the key in two headers, `apikey` and `Authorization`. When a node
+errored, n8n saved the request context into the execution record and redacted `authorization` to
+`**hidden**` — but **not** `apikey`, which carried the same token. Executions **628, 629 and 630**
+(2026-08-08, `Upsert Client` failing) each hold a readable `service_role` JWT at
+`resultData.error.context.request.headers.apikey`.
 
 > **A correction to the shape of this finding, and to how it was nearly lost.** This file previously
-> said the key sits in plaintext *"in every stored execution"*, and the runbook repeated it. That is
-> an overstatement: **successful runs do not store request headers at all.** The exposure is
-> specific to *failed* executions of a Supabase node. The distinction matters, because it is the
-> difference between an unbounded leak and one you can bound by deleting error executions.
+> said the key sits in plaintext *"in every stored execution"*. That is an overstatement:
+> **successful runs store no request headers at all.** The exposure was specific to *failed*
+> executions of a Supabase node.
 >
-> It matters for a second reason. On 2026-08-10 the claim was re-checked before acting on it, by
-> scanning 30 recent Holt executions, 12 Cedar, 12 Brasa, all three workflow definitions and four
-> workflow backups — **zero JWTs**, and a correction was drafted declaring the finding false. The
-> scan was dominated by successful runs, which is exactly where the key never appears. Re-running it
-> filtered to `status=error` found it immediately. **A scan that cannot reach the condition the
-> finding describes is not evidence against it**, and a true security finding was two minutes from
-> being deleted on the strength of one.
+> It matters for a second reason. The claim was re-checked before acting on it, by scanning 30
+> recent Holt executions, 12 Cedar, 12 Brasa, all workflow definitions and four backups —
+> **zero JWTs** — and a correction was drafted declaring the finding false. The scan was dominated
+> by successful runs, which is exactly where the key never appears. Re-run filtered to
+> `status=error`, it found the leak immediately. **A scan that cannot reach the condition a finding
+> describes is not evidence against it**, and a true exposure was minutes from being deleted from
+> this file on the strength of one.
 
-**Where the key lives.** A Railway service variable, `SUPABASE_SERVICE_KEY`, read by **10 nodes**
-here as `{{ $env.SUPABASE_SERVICE_KEY }}`; Cedar reads it in 32 places, Brasa in 76. The workflow
-JSON and successful execution records store the *expression*, never the value — so an n8n API key
-alone does not yield the secret. Failed executions are the leak.
+**The fix, and it is not rotation.** All **44** Supabase and DeepSeek nodes across the four
+workflows — Holt 12, Brasa Support Desk 20, Cedar 7 (plus 2 the owner migrated by hand), Brasa
+Checkout 5 — now authenticate through n8n **credentials** (`supabaseApi`, `deepSeekApi`) instead of
+`{{ $env.… }}` header expressions. n8n stores credentials encrypted and redacts them from error
+contexts. The `apikey` and `Authorization` headers were removed from every node; `Content-Type` and
+`Prefer` stay, the latter because `resolution=merge-duplicates` is what makes the upserts idempotent.
 
-**Closing it, with the honest cost:**
+*Verified 2026-08-11 against the exact failure condition, not a proxy.* `Upsert Client` — the same
+node as execution 630 — was pointed at a non-existent table so PostgREST 404'd and it threw. In
+**execution 736**:
 
-1. **Rotate the key.** Free, minutes, and it invalidates every copy sitting in those stored
-   executions. **Do not rotate the legacy JWT secret** — the `anon` key is derived from the same
-   secret and rotating it invalidates the anon key in all four Netlify front ends at once. This
-   project already has modern keys enabled (`sb_publishable_…` exists), so issue a new
-   `sb_secret_…`, update the Railway variable, redeploy, verify all three builds, then disable the
-   legacy `service_role`. Changing the Railway variable restarts n8n, **which takes all three builds
-   down for the duration**.
-2. **Stop passing it as a header expression.** Move it into an n8n *credential* (Header Auth or the
-   Supabase credential type), which n8n stores encrypted and does not write into error contexts.
-   Roughly an hour across the three builds and their 118 header references. **Rotation without this
-   reintroduces the leak on the next failed run.**
-3. **Delete the affected executions** — for this build, 628, 629 and 630 — and **shorten execution
-   retention** (`EXECUTIONS_DATA_MAX_AGE`) so the window is bounded. Free, a Railway environment
-   variable, but it also destroys the debugging record, which is why `hvl_workflow_runs` exists to
-   carry the durable part instead.
+```
+apikey           **hidden**
+Authorization    **hidden**
+```
+
+Both redacted, zero JWTs anywhere in the record. A DeepSeek failure was tested first and proved
+nothing about this, because the leak came from Supabase nodes; the probe was redone on the right one.
+
+**Still to do, and it is the owner's:** the key that leaked is still valid. Rotate it — issue a new
+`sb_secret_…` rather than rotating the legacy JWT secret, since the `anon` key derives from that and
+rotating it would break all four Netlify front ends at once — update the n8n credential, and delete
+executions 628, 629 and 630, which still hold copies of the old one.
+
+**What remains true about `$env`:** `RESEND_API_KEY` is still read that way by 9 nodes, because no
+Resend credential exists yet. The same leak shape applies to it on a failed send.
 
 ## 5 · What is missing, and what closing it actually costs
 

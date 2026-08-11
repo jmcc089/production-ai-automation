@@ -85,11 +85,11 @@ export N8N_BASE=https://n8n-production-3503.up.railway.app
 python3 workflow/sync.py check
 ```
 
-Healthy is two lines saying `matches repo` and exit 0. Anything else prints the nodes that differ
+Healthy is one line saying `matches repo` and exit 0. Anything else prints the nodes that differ
 by name and a diff, and exits 1.
 
-This compares the live workflow against `workflow/intake.json` and `workflow/failure-recorder.json`
-in this repository, so it checks **everything** — not a handful of values somebody thought to list.
+This compares the live workflow against `workflow/intake.json` in this repository, so it checks
+**everything** — not a handful of values somebody thought to list.
 The earlier version of this section hand-checked node count, writer count, timeout, `max_tokens` and
 `errorWorkflow`; it would have caught the 2026-08-09 revert and would have missed any change to a
 node's code.
@@ -241,26 +241,23 @@ wrong about a change in this build.
 
 ## Rotating a key
 
-The Supabase `service_role` key is a **Railway service variable**, `SUPABASE_SERVICE_KEY`, read by
-10 nodes as `{{ $env.SUPABASE_SERVICE_KEY }}`.
+Since 2026-08-11 the Supabase and DeepSeek keys live in **n8n credentials**, not in Railway
+variables: `Supabase account` (`supabaseApi`) and `DeepSeek account` (`deepSeekApi`). All 12 nodes
+in this workflow authenticate through them. `RESEND_API_KEY` is still a Railway variable read as
+`{{ $env.RESEND_API_KEY }}` by 2 nodes here — **do not delete that one.**
 
-**It leaks in failed executions.** When a Supabase node errors, n8n saves the request context and
-redacts `authorization` but **not** `apikey`, which carries the same token. Confirmed on this
-workflow: executions **628, 629 and 630** hold a readable `service_role` JWT. Successful runs do
-not — this file previously said "every stored execution", which overstated it. See `SECURITY.md`.
-
-To rotate:
+To rotate Supabase:
 
 1. Issue a **new secret key** in Supabase (`sb_secret_…`). **Do not rotate the legacy JWT secret** —
-   the `anon` key is derived from it and rotating it breaks all four Netlify front ends at once.
-2. Update `SUPABASE_SERVICE_KEY` in Railway. This **redeploys n8n, which takes Cedar and Brasa down
-   with this build** for the duration. Never a casual action.
-3. Run the health check for all three builds before disabling the old key.
+   the `anon` key derives from it and rotating it breaks all four Netlify front ends at once.
+2. Edit the **`Supabase account` credential in n8n** and paste it there. That is the only place it
+   lives now; there is no Railway variable to update and no redeploy, so **nothing goes down**.
+3. Health check all three builds. Brasa's costs no email — start there.
 4. Disable the legacy `service_role` key in Supabase.
-5. **Delete executions 628, 629 and 630**, which hold copies of the old key.
+5. **Delete executions 628, 629 and 630**, which hold copies of the old key in plaintext.
 
-Rotation buys a clean slate; it does not stop the next failed run writing the new key into an error
-context. Moving the key into an n8n credential is what does that — see `SECURITY.md`.
+Moving the key into a credential is what stopped it being written into error contexts; rotation
+just retires the copies already sitting in those three executions. See `SECURITY.md`.
 
 ---
 
