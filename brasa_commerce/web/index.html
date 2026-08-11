@@ -668,7 +668,12 @@ const Brasa = (() => {
   const SUPABASE_URL = '__SUPABASE_URL__';
   const SUPABASE_KEY = '__SUPABASE_KEY__';
   const N8N_CHECKOUT = 'https://n8n-production-3503.up.railway.app/webhook/brasa-checkout';
-  const N8N_INTAKE   = 'https://n8n-production-3503.up.railway.app/webhook/brasa-intake';
+  // La tienda tiene su propia puerta desde 2026-08-11. Antes compartía `brasa-intake` con el
+  // formulario de Tally, imitando su forma a propósito, y eso hacía imposible autenticar el de
+  // Tally: un secreto que este archivo tuviera que enviar lo lee cualquiera con F12. Separadas,
+  // el formulario del equipo puede cerrarse y este mensaje público queda identificable por sí
+  // mismo — que es lo que hace falta para limitarlo algún día.
+  const N8N_MESSAGE  = 'https://n8n-production-3503.up.railway.app/webhook/brasa-message';
 
   const FREE_SHIPPING_OVER = 75;
   const FLAT_SHIPPING = 8;
@@ -1175,7 +1180,7 @@ const Brasa = (() => {
     ] } };
 
     try {
-      const res = await fetch(N8N_INTAKE, {
+      const res = await fetch(N8N_MESSAGE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

@@ -369,6 +369,12 @@
        "name": "source_event_id",
        "type": "string",
        "value": "={{ $json.body.data?.submissionId || $json.body.eventId || '' }}"
+      },
+      {
+       "id": "intake-secret",
+       "name": "intake_secret",
+       "type": "string",
+       "value": "={{ ($json.body?.data?.fields || []).find(f => f.label === 'Intake secret')?.value || '' }}"
       }
      ]
     },
@@ -737,6 +743,16 @@
         "type": "string"
        },
        "rightValue": ""
+      },
+      {
+       "id": "intake-secret",
+       "leftValue": "={{ !$env.CH_INTAKE_SECRET || $json.intake_secret === $env.CH_INTAKE_SECRET }}",
+       "operator": {
+        "operation": "true",
+        "singleValue": true,
+        "type": "boolean"
+       },
+       "rightValue": true
       }
      ],
      "options": {

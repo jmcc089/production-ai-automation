@@ -11,7 +11,7 @@ project write-up; this file is only what to type when something needs doing.
 | Database | Supabase | project `mjfvjogsknnuizsoygpp`, tables prefixed `hvl_` |
 | Model | DeepSeek | `deepseek-v4-flash`, `max_tokens` 5000, timeout 90 s, one retry, fails sideways not fatally |
 | Mail | Resend | sender `intake@mail.mcruz-portfolio.space`, key still a Railway variable — see `SECURITY.md` for why that is fine |
-| Intake secret | Railway | `HVL_INTAKE_SECRET`, checked by the `Guard`. **Unset by default, and then the check does not run** |
+| Intake secret | Railway | `HVL_INTAKE_SECRET`, checked by the `Guard` against a hidden Tally field labelled `Intake secret`. **Unset by default, and then the check does not run** — Cedar and Brasa have their own, see `n8n/README.md` |
 
 **n8n is shared with Cedar Healthcare and Brasa Commerce.** Anything that stops the n8n service
 stops those two as well. Restarting it is never a casual action.

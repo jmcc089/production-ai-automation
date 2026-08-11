@@ -479,6 +479,17 @@
     ]
    ]
   },
+  "Storefront Webhook": {
+   "main": [
+    [
+     {
+      "index": 0,
+      "node": "Guard Intake",
+      "type": "main"
+     }
+    ]
+   ]
+  },
   "Tally Webhook": {
    "main": [
     [
@@ -1738,7 +1749,7 @@
    "id": "guard-intake-09",
    "name": "Guard Intake",
    "parameters": {
-    "jsCode": "// Everything arriving here came from a public, unauthenticated endpoint. Nothing\n// below trusts its shape. Added at assurance item 09, where four probes showed\n// what the absence of this node cost:\n//   {\"hello\":\"world\"}      -> died three nodes later at Retrieve Products with\n//                             \"Could not find the function public.search_products\n//                             without parameters\" -- an error about the wrong thing\n//                             entirely -- and the caller got 200 with no body.\n//   a NUL in the message   -> Postgres refused the write, same 200-with-no-body.\n//   no Email address field -> a bc_customers row with email = '' and an auto-sent\n//                             reply addressed to nobody.\n//   a 1.1 MB message       -> accepted, stored, and paid for with a model call.\nconst t0   = new Date().toISOString();   // first executable point of the run\nconst raw  = $input.first().json || {};\nconst body = raw.body || {};\n\nconst reject = (why) => [{ json: { intake_valid: false, intake_error: why, t0 } }];\n\nconst data = body.data;\nif (!data || typeof data !== 'object') return reject('body.data is missing or is not an object');\nconst fields = data.fields;\nif (!Array.isArray(fields)) return reject('body.data.fields is missing or is not an array');\n\nconst pick = (label) => {\n  const f = fields.find(x => x && x.label === label);\n  return f == null ? null : f.value;\n};\n\n// Control characters, zero-width characters and bidirectional overrides. A NUL is\n// the one that actually breaks something; the rest are stripped because they let a\n// message render as one thing to an agent and store as another.\nconst clean = (v) => String(v == null ? '' : v)\n  .replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, '')\n  .replace(/[\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]/g, '')\n  .trim();\n\nconst MAX_MESSAGE = 4000;\n\nconst name       = clean(pick('Full name')).slice(0, 200);\nconst email      = clean(pick('Email address')).toLowerCase().slice(0, 320);\nconst phone      = clean(pick('Phone number')).slice(0, 40);\nconst messageRaw = clean(pick('Message'));\n\n// A reply cannot be delivered without an address, and a customer row keyed on ''\n// collides with every other address-less submission.\nif (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) return reject('missing or invalid email address');\n\n// The key the idempotency guarantee rests on. Without it the caller gets no\n// protection from duplicates, so say so rather than proceeding quietly.\nconst eventId = clean(data.responseId) || clean(data.submissionId) || clean(body.eventId);\nif (!eventId) return reject('no idempotency key on the event');\n\nreturn [{ json: {\n  t0,\n  intake_valid:      true,\n  customer_name:     name || 'Customer',\n  customer_email:    email,\n  phone,\n  raw_message:       messageRaw.slice(0, MAX_MESSAGE),\n  message_truncated: messageRaw.length > MAX_MESSAGE,\n  original_length:   messageRaw.length,\n  source_event_id:   eventId\n} }];\n"
+    "jsCode": "// Everything arriving here came from a public, unauthenticated endpoint. Nothing\n// below trusts its shape. Added at assurance item 09, where four probes showed\n// what the absence of this node cost:\n//   {\"hello\":\"world\"}      -> died three nodes later at Retrieve Products with\n//                             \"Could not find the function public.search_products\n//                             without parameters\" -- an error about the wrong thing\n//                             entirely -- and the caller got 200 with no body.\n//   a NUL in the message   -> Postgres refused the write, same 200-with-no-body.\n//   no Email address field -> a bc_customers row with email = '' and an auto-sent\n//                             reply addressed to nobody.\n//   a 1.1 MB message       -> accepted, stored, and paid for with a model call.\nconst t0   = new Date().toISOString();   // first executable point of the run\nconst raw  = $input.first().json || {};\nconst body = raw.body || {};\n\nconst reject = (why) => [{ json: { intake_valid: false, intake_error: why, t0 } }];\n\n// Two callers reach this node and their payloads are identical by design: Tally, which\n// posts server-to-server, and the storefront's own JS, which copies Tally's shape. A shared\n// secret only means anything on the first, because anything the browser sends is readable by\n// anyone who opens the page. `webhookUrl` is what separates them, and the webhook node emits\n// it already.\n//\n// Inert until BC_INTAKE_SECRET is set: a closed gate shipped before the Tally field exists\n// would refuse every real intake. While unset it says so, so which state a run was in is a\n// question the database answers rather than one somebody remembers.\nconst viaTally = String(raw.webhookUrl || '').indexOf('/brasa-intake') !== -1;\nconst expectedSecret = String($env.BC_INTAKE_SECRET || '');\nif (viaTally && expectedSecret) {\n  const sentSecret = ((body.data && Array.isArray(body.data.fields) ? body.data.fields : [])\n    .find(f => f && f.label === 'Intake secret') || {}).value;\n  if (String(sentSecret == null ? '' : sentSecret).trim() !== expectedSecret) {\n    return reject('intake secret missing or wrong');\n  }\n}\n\nconst data = body.data;\nif (!data || typeof data !== 'object') return reject('body.data is missing or is not an object');\nconst fields = data.fields;\nif (!Array.isArray(fields)) return reject('body.data.fields is missing or is not an array');\n\nconst pick = (label) => {\n  const f = fields.find(x => x && x.label === label);\n  return f == null ? null : f.value;\n};\n\n// Control characters, zero-width characters and bidirectional overrides. A NUL is\n// the one that actually breaks something; the rest are stripped because they let a\n// message render as one thing to an agent and store as another.\nconst clean = (v) => String(v == null ? '' : v)\n  .replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, '')\n  .replace(/[\\u200B-\\u200F\\u202A-\\u202E\\u2066-\\u2069\\uFEFF]/g, '')\n  .trim();\n\nconst MAX_MESSAGE = 4000;\n\nconst name       = clean(pick('Full name')).slice(0, 200);\nconst email      = clean(pick('Email address')).toLowerCase().slice(0, 320);\nconst phone      = clean(pick('Phone number')).slice(0, 40);\nconst messageRaw = clean(pick('Message'));\n\n// A reply cannot be delivered without an address, and a customer row keyed on ''\n// collides with every other address-less submission.\nif (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) return reject('missing or invalid email address');\n\n// The key the idempotency guarantee rests on. Without it the caller gets no\n// protection from duplicates, so say so rather than proceeding quietly.\nconst eventId = clean(data.responseId) || clean(data.submissionId) || clean(body.eventId);\nif (!eventId) return reject('no idempotency key on the event');\n\nreturn [{ json: {\n  t0,\n  intake_valid:      true,\n  customer_name:     name || 'Customer',\n  customer_email:    email,\n  phone,\n  raw_message:       messageRaw.slice(0, MAX_MESSAGE),\n  message_truncated: messageRaw.length > MAX_MESSAGE,\n  original_length:   messageRaw.length,\n  source_event_id:   eventId\n} }];\n"
    },
    "position": [
     -240,
@@ -2037,6 +2048,23 @@
    ],
    "type": "n8n-nodes-base.code",
    "typeVersion": 2
+  },
+  {
+   "id": "b83db2c1-db49-42c4-9fe5-4ffa85d60097",
+   "name": "Storefront Webhook",
+   "parameters": {
+    "httpMethod": "POST",
+    "options": {},
+    "path": "brasa-message",
+    "responseMode": "responseNode"
+   },
+   "position": [
+    -416,
+    286
+   ],
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1,
+   "webhookId": "606f4dd9-4438-4208-807c-45e79f3229dc"
   }
  ],
  "settings": {
